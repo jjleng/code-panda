@@ -1,0 +1,54 @@
+[tool.poetry]
+name = "cp-agent"
+version = "0.1.0"
+description = "FastAPI server for CodePanda AI agents"
+authors = ["Jijun Leng <962285+jjleng@users.noreply.github.com>"]
+readme = "README.md"
+
+[tool.poetry.scripts]
+dev = "cp_agent.run:main"
+kb-cli = "cp_agent.kb.cli:main"
+
+[tool.poetry.dependencies]
+python = ">=3.11,<4.0"
+uvicorn = "^0.34.0"
+fastapi = "^0.115.6"
+python-dotenv = "^1.0.1"
+loguru = "^0.7.3"
+pydantic-settings = "^2.7.1"
+litellm = "^1.57.3"
+pydantic = "^2.10.5"
+pathspec = "^0.12.1"
+supabase = "^2.11.0"
+langchain-text-splitters = "^0.3.5"
+typer = "^0.15.1"
+chromadb = "^0.6.3"
+openai = "^1.64.0"
+python-slugify = "^8.0.4"
+python-multipart = "^0.0.20"
+
+[tool.mypy]
+ignore_missing_imports = true
+disallow_untyped_defs = true
+check_untyped_defs = true
+plugins = "pydantic.mypy"
+warn_unused_configs = true
+
+[tool.isort]
+profile = "black"
+
+[tool.poetry.group.dev.dependencies]
+isort = "^5.13.2"
+black = "^24.10.0"
+mypy = "^1.14.1"
+pytest = "^8.3.4"
+pytest-asyncio = "^0.25.2"
+openapi-python-client = "^0.23.0"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+markers = ["asyncio: mark test as async/await test"]
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

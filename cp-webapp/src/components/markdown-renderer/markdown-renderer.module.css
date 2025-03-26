@@ -1,0 +1,38 @@
+.markdownRenderer {
+  max-width: 100%;
+  line-height: 1.5;
+}
+
+.markdownRenderer ::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.resultStreaming > :not(ol):not(ul):not(pre):last-child:after,
+.resultStreaming > pre:last-child code:after {
+  content: '●';
+  line-height: normal;
+  vertical-align: baseline;
+}
+
+[dir='ltr'] .resultStreaming > :not(ol):not(ul):not(pre):last-child:after,
+[dir='ltr'] .resultStreaming > pre:last-child code:after {
+  margin-left: 0.25rem;
+}
+
+[dir='rtl'] .resultStreaming > :not(ol):not(ul):not(pre):last-child:after,
+[dir='rtl'] .resultStreaming > pre:last-child code:after {
+  margin-right: 0.25rem;
+}
+
+/* Styles for nested markdown content inside thinking tags */
+.nestedMarkdown {
+  line-height: 1.5;
+}
+
+.nestedMarkdown pre {
+  overflow-x: auto;
+}
+
+.nestedMarkdown code {
+  font-size: 0.9em;
+}

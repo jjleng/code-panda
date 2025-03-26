@@ -1,0 +1,106 @@
+services:
+  cp-agent-setup:
+    build:
+      context: ./cp-agent
+      dockerfile: Dockerfile.dev
+      args:
+        ENV_FILE: .env.development
+        ENV: development
+        KB_CHROMA_DIRECTORY: /app/kb_db
+        KB_CHROMA_CLIENT_TYPE: persistent
+    volumes:
+      - ./cp-agent/cp_agent:/app/cp_agent:ro
+      - agent-kb-data:/app/kb_db
+    environment:
+      - LOGURU_LEVEL=DEBUG
+      - TRANSFORMERS_VERBOSITY=info
+      - PYTHONUNBUFFERED=1
+      - TOKENIZERS_PARALLELISM=true
+    command: >
+      sh -c "poetry install --no-root &&
+             poetry run kb-cli nuke --force &&
+             poetry run kb-cli ingest /app/cp_agent/kb/data"
+
+  cp-agent:
+    build:
+      context: ./cp-agent
+      dockerfile: Dockerfile.dev
+      args:
+        ENV_FILE: .env.development
+        ENV: development
+        # Pass build args to modify .env.development content
+        KB_CHROMA_DIRECTORY: /app/kb_db
+        KB_CHROMA_CLIENT_TYPE: persistent
+        WORKSPACE_PATH: /app/workspace
+    ports:
+      - '8000:8000'
+    volumes:
+      - ./cp-agent/cp_agent:/app/cp_agent:ro
+      - agent-kb-data:/app/kb_db
+      - workspace-data:/app/workspace
+    environment:
+      - PORT=8000
+      - ENV=development
+      - KB_CHROMA_CLIENT_TYPE=persistent
+      - KB_CHROMA_DIRECTORY=/app/kb_db
+      - WORKSPACE_PATH=/app/workspace
+      - RUNNER_BASE_URL=http://cp-runner:8088
+    restart: unless-stopped
+    depends_on:
+      cp-runner:
+        condition: service_started
+      cp-agent-setup:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:8000/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  cp-runner:
+    build:
+      context: ./cp-runner
+      dockerfile: Dockerfile.dev
+      args:
+        ENV_FILE: .env.development
+        ENV: development
+        # Pass build args to modify .env.development content
+        WORKSPACE_PATH: /app/workspace
+    ports:
+      - '8088:8088' # Control port
+      - '3035:3035' # Proxy port
+    environment:
+      - ENV=development
+      - CONTROL_PORT=8088
+      - PROXY_PORT=3035
+      - WORKSPACE_PATH=/app/workspace
+    volumes:
+      - workspace-data:/app/workspace
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:8088/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  cp-webapp:
+    build:
+      context: ./cp-webapp
+      dockerfile: Dockerfile.dev
+      args:
+        ENV_FILE: .env.development
+        ENV: development
+    ports:
+      - '3000:3000'
+    environment:
+      - ENV=development
+    restart: unless-stopped
+    depends_on:
+      - cp-agent
+      - cp-runner
+
+volumes:
+  agent-kb-data: # Persistent storage for the knowledge base
+  workspace-data: # Shared workspace for projects between agent and runner

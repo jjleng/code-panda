@@ -1,0 +1,69 @@
+<relevant-knowledge-supabase-login>
+When asked to add authentication or login feature to the app, always follow these steps:
+
+1. User Profile Assessment:
+   - Confirm if user profile data storage is needed (username, roles, avatars)
+   - If yes: Create profiles table migration
+   - If no: Proceed with basic auth setup
+
+2. Core Authentication Setup:
+   a. UI Components:
+      - Use @supabase/auth-ui-react Auth component
+      - Apply light theme (unless dark theme exists)
+      - Style to match application design
+      - Skip third-party providers unless specified
+
+   b. Session Management:
+      - Wrap app with SessionContextProvider from @supabase/auth-ui-react
+      - Import supabase client from @/lib/supabaseClient
+      - Implement auth state monitoring using supabase.auth.onAuthStateChange
+      - Add automatic redirects:
+        - Authenticated users → main page
+        - Unauthenticated users → login page
+
+   c. Error Handling:
+      - Implement AuthApiError handling utility
+      - Monitor auth state changes for errors
+      - Clear errors on sign-out
+      - DO NOT use onError prop (unsupported)
+
+IMPORTANT! You cannot skip step 1.
+
+Below code snippets are provided for reference:
+
+Login state management:
+```
+    useEffect(() => {
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+        if (event === 'USER_UPDATED' || event === 'SIGNED_IN') {
+          const { error } = await supabase.auth.getSession();
+          // Other code here
+        }
+        if (event === 'SIGNED_OUT') {
+          // Other code here
+        }
+      });
+
+      return () => subscription.unsubscribe();
+    }, []);
+```
+
+Login page:
+```jsx
+  import { Auth } from '@supabase/auth-ui-react';
+  import { ThemeSupa } from '@supabase/auth-ui-shared';
+  function Login() {
+    // Other code here
+    return (
+      <Auth
+        supabaseClient={supabase}
+        providers={[]}
+        appearance={{
+          theme: ThemeSupa,
+        }}
+        theme="light"
+      />
+    );
+  }
+```
+</relevant-knowledge-supabase-login>

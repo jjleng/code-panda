@@ -1,0 +1,32 @@
+# Go specific
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+__debug_bin
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+*.tmp
+
+# Project specific
+tmp/
+workspace/
+.git/
+.gitignore
+README.md
+Makefile
+.air.toml
+
+# Build
+dist/
+build/

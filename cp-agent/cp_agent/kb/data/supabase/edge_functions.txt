@@ -1,0 +1,89 @@
+<supabase-edge-functions>
+
+## When to Use Edge Functions
+
+- Use edge functions for:
+  - API-to-API communications
+  - Handling sensitive API tokens or secrets
+  - Typical backend work requiring server-side logic
+
+## Key Implementation Principles
+
+1. Location:
+- Write functions in the supabase/functions folder
+- Each function should be a standalone, self-inclusive file (e.g., function-name.ts)
+- Avoid using folder/index.ts structure patterns
+- Functions will be deployed automatically and you will be notified
+
+2. Configuration:
+- DO NOT edit config.toml
+
+3. Supabase Client:
+- Do not import code from supabase/
+- Functions operate in their own context
+
+4. Function Invocation:
+- Use supabase.functions.invoke() method
+- Avoid raw HTTP requests like fetch or axios
+
+5. CORS Configuration:
+- Always include CORS headers:
+
+```typescript
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type'
+};
+```
+
+- Implement OPTIONS request handler:
+```typescript
+if (req.method === 'OPTIONS') {
+  return new Response(null, { headers: corsHeaders });
+}
+```
+
+6. Function Design:
+- Include all core application logic within the edge function
+- Do not import code from other project files
+
+7. Secrets Management:
+- Pre-configured secrets, no need to set up manually:
+  - SUPABASE_URL
+  - SUPABASE_ANON_KEY
+  - SUPABASE_SERVICE_ROLE_KEY
+  - SUPABASE_DB_URL
+
+- For new secrets/API tokens:
+  - Inform user to set up via Supabase Console
+  - Direct them to: Project -> Edge Functions -> Manage Secrets
+  - Use <resource-link> for guidance
+
+8. Logging:
+- Implement comprehensive logging for debugging purposes
+
+9. Linking:
+Use <resource-link> to link to the relevant edge function
+
+10. Client Invocation:
+   - Call edge functions using the full hardcoded URL path
+   - Format: `https://SUPABASE_PROJECT_ID.supabase.co/functions/v1/EDGE_FUNCTION_NAME`
+   - Note: Environment variables are not supported - always use full hardcoded URLs
+
+11. Edge Function Template:
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0'
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
+
+serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders })
+  }
+  // ... function logic
+})
+
+</supabase-edge-functions>

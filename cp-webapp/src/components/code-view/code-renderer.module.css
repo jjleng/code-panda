@@ -1,0 +1,30 @@
+.codeMirrorCustom {
+  height: 100% !important;
+  overflow: hidden;
+}
+
+.codeMirrorCustom :global(.cm-editor) {
+  height: 100% !important;
+  border: none !important;
+}
+
+.codeMirrorCustom :global(.cm-scroller) {
+  overflow: hidden;
+}
+
+.codeMirrorCustom :global(.cm-gutters) {
+  height: 100% !important;
+  border-right: none !important;
+}
+
+.codeMirrorCustom :global(.cm-focused) {
+  outline: none !important;
+}
+
+.mergeViewWrapper :global(.cm-mergeView) {
+  min-height: 100%;
+}
+
+.mergeViewWrapper :global(.cm-mergeViewEditors) {
+  height: 100%;
+}

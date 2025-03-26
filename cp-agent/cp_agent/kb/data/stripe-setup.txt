@@ -1,0 +1,351 @@
+<stripe-setup>
+
+## **Stripe Integration Guide for Website Generation**
+
+### **Overview for LLM**
+This guide helps you assist users in setting up Stripe API for payments in their generated websites. The guide covers:
+- Recurring subscription payments (requires user authentication)
+- One-off payments (authentication optional)
+- Multi-product e-commerce implementations
+- Webhook integration for payment status tracking
+
+As an LLM, you must dynamically tailor responses based on the user's specific requirements. Always begin by determining the user's payment needs before providing implementation guidance.
+
+### **User Interaction Guidelines**
+1. **Ask Clarifying Questions First**:
+   - "Do you need recurring subscriptions or one-time payments?"
+   - "Will you be selling multiple products or just one service/product?"
+   - "Do you need to track payment status in your database after checkout?"
+   - Only proceed after understanding the user's needs.
+
+2. **Verify Prerequisites Sequentially**:
+   - Use the requirements checklist, addressing missing prerequisites before continuing.
+   - For each missing requirement, provide step-by-step guidance.
+
+3. **Track Implementation Progress**:
+   - Use checkboxes to visually indicate user's progress
+   - Only provide the next relevant step rather than overwhelming with all information
+
+4. **Handle Ambiguity and Errors**:
+   - If the user's request is unclear, ask clarifying questions
+   - For reported issues, request specific error messages and provide tailored troubleshooting
+
+### **Requirements Checklist**
+- [ ] **Supabase project**:
+  - If not set up, guide user to create a Supabase project.
+- [ ] **Authentication system**:
+  - Required for recurring payments; optional for one-off payments.
+- [ ] **Stripe account**:
+  - If not available, provide link to Stripe's signup page.
+- [ ] **Stripe product with pricing**:
+  - Guide user to create appropriate products in Stripe Dashboard.
+- [ ] **Stripe secret key**:
+  - Should be stored in edge function secrets as `STRIPE_SECRET_KEY`.
+- [ ] **Webhook signing secret** (if using webhooks):
+  - Store as `STRIPE_WEBHOOK_SECRET` in edge function secrets.
+
+Note: The following secrets are pre-configured in Supabase and don't need manual setup:
+- SUPABASE_URL
+- SUPABASE_ANON_KEY
+- SUPABASE_SERVICE_ROLE_KEY
+- SUPABASE_DB_URL
+
+### **Detailed Implementation Process**
+
+#### **Step 1: Determine Payment Type**
+- Ask: "Do you need recurring subscriptions or one-time payments?"
+  - **Recurring Payments**:
+    - Confirm Supabase auth is configured
+    - Use `mode: 'subscription'` in checkout function
+    - Explain subscription lifecycle management
+  - **One-Time Payments**:
+    - Auth is optional but recommended
+    - Use `mode: 'payment'` in checkout function
+
+#### **Step 2: Assess Product Complexity**
+- Ask: "Are you selling multiple products/services or just one?"
+  - **Single Product**:
+    - Use hardcoded price ID approach
+    - Implement basic checkout function
+  - **Multiple Products**:
+    - Guide to create product-price database schema
+    - Implement dynamic checkout function
+
+#### **Step 3: Configure Stripe Account**
+- Guide user to:
+  1. Create Stripe account if needed
+  2. Create product(s) in Stripe Dashboard
+  3. Configure pricing (recurring or one-time)
+  4. Note the Price ID(s) (starts with `price_`)
+
+#### **Step 4: Set Up Edge Functions**
+- Based on requirements determined above, provide:
+  1. Checkout edge function implementation
+  2. Subscription verification function (if needed)
+  3. Webhook handler (if needed)
+  4. No need to deploy manually; functions are auto-deployed
+
+#### **Step 5: Secure Stripe Credentials**
+- Direct user to store Stripe secret key as `STRIPE_SECRET_KEY` in edge function secrets
+- If using webhooks, also store `STRIPE_WEBHOOK_SECRET`
+- Explain importance of not hardcoding these values in code
+
+Prefer to use the <secret-input> tag to help users to save secrets.
+
+Example:
+<secret-input name="STRIPE_SECRET_KEY" description="Required for Stripe integration">Stripe Secret Key</secret-input>
+This will create a button for secure secret input.
+
+#### **Step 6: Implement Client-Side Code**
+- Provide appropriate client code based on payment type:
+  ```javascript
+  // Example client code to initiate checkout
+  // Environment variables are not supported. DO NOT use .env - always use full hardcoded URLs
+  const response = await fetch(
+    "https://SUPABASE_PROJECT_ID.supabase.co/functions/v1/create-checkout",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${userToken}`, // From supabase.auth.getSession()
+      },
+      body: JSON.stringify({
+        priceId: "price_xyz123" // Or product_id for dynamic pricing
+      }),
+    }
+  );
+  const { url } = await response.json();
+  window.location.href = url; // Redirect to Stripe Checkout
+  ```
+
+#### **Step 7: Webhook Integration (Optional)**
+- Only recommend if user needs post-payment processing
+- Explain added complexity and maintenance requirements
+- If needed, provide webhook handling edge function
+- Guide on configuring webhook endpoint in Stripe Dashboard
+
+### **Implementation Examples**
+
+<example_checkout_edge_function>
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import Stripe from 'https://esm.sh/stripe@14.21.0'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0'
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
+
+serve(async (req) => {
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders })
+  }
+
+  const supabaseClient = createClient(
+    Deno.env.get('SUPABASE_URL') ?? '',
+    Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+  )
+
+  try {
+    // Get the session or user object
+    const authHeader = req.headers.get('Authorization')!
+    const token = authHeader.replace('Bearer ', '')
+    const { data } = await supabaseClient.auth.getUser(token)
+    const user = data.user
+    const email = user?.email
+
+    if (!email) {
+      throw new Error('No email found')
+    }
+
+    const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
+      apiVersion: '2023-10-16',
+    })
+
+    // Parse request body for dynamic pricing or use hardcoded price
+    const { priceId = "insert_price_id_here" } = await req.json().catch(() => ({}));
+
+    const customers = await stripe.customers.list({
+      email: email,
+      limit: 1
+    })
+
+    let customer_id = undefined
+    if (customers.data.length > 0) {
+      customer_id = customers.data[0].id
+      // Check if already subscribed (for subscription mode)
+      const paymentMode = "subscription"; // Change to 'payment' for one-off
+      if (paymentMode === 'subscription') {
+        const subscriptions = await stripe.subscriptions.list({
+          customer: customers.data[0].id,
+          status: 'active',
+          price: priceId,
+          limit: 1
+        })
+
+        if (subscriptions.data.length > 0) {
+          throw new Error("Customer already has an active subscription")
+        }
+      }
+    }
+
+    console.log('Creating payment session...')
+    const session = await stripe.checkout.sessions.create({
+      customer: customer_id,
+      customer_email: customer_id ? undefined : email,
+      line_items: [
+        {
+          price: priceId,
+          quantity: 1,
+        },
+      ],
+      mode: 'subscription', // Change to 'payment' for one-off payments
+      success_url: `${req.headers.get('origin')}/payment-success`,
+      cancel_url: `${req.headers.get('origin')}/payment-cancelled`,
+      client_reference_id: user.id, // Store user ID for webhook processing
+    })
+
+    console.log('Payment session created:', session.id)
+    return new Response(
+      JSON.stringify({ url: session.url }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
+      }
+    )
+  } catch (error) {
+    console.error('Error creating payment session:', error)
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500,
+      }
+    )
+  }
+})
+</example_checkout_edge_function>
+
+<example_is_subscribed_edge_function>
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import Stripe from 'https://esm.sh/stripe@14.21.0'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0'
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
+
+serve(async (req) => {
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders })
+  }
+
+  const supabaseClient = createClient(
+    Deno.env.get('SUPABASE_URL') ?? '',
+    Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+  )
+
+  // Get the session or user object
+  const authHeader = req.headers.get('Authorization')!
+  const token = authHeader.replace('Bearer ', '')
+  const { data } = await supabaseClient.auth.getUser(token)
+  const user = data.user
+
+  try {
+    const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
+      apiVersion: '2023-10-16',
+    })
+
+    const email = user?.email
+
+    if (!email) {
+      throw new Error('No email found')
+    }
+
+    // Get customer by email
+    const customers = await stripe.customers.list({
+      email: email,
+      limit: 1
+    })
+
+    if (customers.data.length === 0) {
+      return new Response(
+        JSON.stringify({ subscribed: false }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200,
+        }
+      )
+    }
+
+    const subscriptions = await stripe.subscriptions.list({
+      customer: customers.data[0].id,
+      status: 'active',
+      price: 'insert_price_id_here',
+      limit: 1
+    })
+
+    return new Response(
+      JSON.stringify({
+        subscribed: subscriptions.data.length > 0,
+      }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
+      }
+    )
+  } catch (error) {
+    console.error('Error checking subscription:', error)
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500,
+      }
+    )
+  }
+})
+</example_is_subscribed_edge_function>
+
+### **Error Handling & Troubleshooting**
+Common issues and solutions to guide users through:
+
+#### **Invalid API Key**
+- **Symptoms**: 401 errors, "Invalid API Key" messages
+- **Solution**:
+  - Verify `STRIPE_SECRET_KEY` is correctly copied from Stripe Dashboard
+  - Ensure it's properly stored in Supabase edge function secrets
+  - Check that it's a *secret* key (starts with "sk_"), not a publishable key
+
+#### **Authentication Issues**
+- **Symptoms**: "No email found" errors
+- **Solution**:
+  - Ensure user is logged in before calling checkout
+  - Verify auth token is correctly passed in Authorization header
+  - Check Supabase auth configuration
+
+#### **Webhook Signature Failures**
+- **Symptoms**: 400 errors with "signature verification failed"
+- **Solution**:
+  - Verify `STRIPE_WEBHOOK_SECRET` is correctly configured
+  - Ensure webhook URL is properly configured in Stripe Dashboard
+  - Check that webhook events are firing (Stripe Dashboard > Webhooks > Events)
+
+### **Best Practices**
+- DO use separate test and live API keys from Stripe
+- DO implement webhook signature verification
+- DO store all sensitive keys in edge function secrets
+- DO consider implementing error logging for debugging
+- DON'T store raw Stripe credentials in code or frontend
+- DON'T create a stripe client with @stripe/stripe-js since checkout sessions should be created server-side
+
+### **Resource Links**
+<resource-link url="https://dashboard.stripe.com/webhooks">Stripe Webhooks Dashboard</resource-link>
+<resource-link url="https://stripe.com/docs/webhooks">Stripe Webhooks Documentation</resource-link>
+<resource-link url="https://dashboard.stripe.com/products">Stripe Product Page</resource-link>
+<resource-link url="https://dashboard.stripe.com/apikeys">Stripe API Keys Page</resource-link>
+
+</stripe-setup>

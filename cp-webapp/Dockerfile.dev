@@ -1,0 +1,29 @@
+FROM node:23-alpine
+
+# Install pnpm
+RUN npm install -g pnpm
+
+# Set working directory
+WORKDIR /app
+
+# Copy package.json and related files
+COPY package.json pnpm-lock.yaml* ./
+
+# Install dependencies with development packages
+RUN pnpm install
+
+# Add environment file handling
+ARG ENV_FILE=.env.development
+ARG ENV=development
+COPY ${ENV_FILE} .env.${ENV}
+ENV ENV=${ENV}
+ENV NODE_ENV=development
+
+# Copy application code
+COPY . .
+
+# Expose port
+EXPOSE 3000
+
+# Run the development server
+CMD ["pnpm", "dev"]
