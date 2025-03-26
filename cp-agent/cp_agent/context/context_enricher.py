@@ -152,17 +152,24 @@ class ContextEnricher:
             """
         )
 
-        current_files = f"""
+        current_files = """
 ## Important Files and Their Contents
 1. package.json
 ```json
-{read_file_content(str(Path(self.cwd) / "package.json"), add_line_numbers=False)}
+{0}
 ```
 2. src/App.tsx
 ```tsx
-{read_file_content(str(Path(self.cwd) / "src" / "App.tsx"), add_line_numbers=True)}
+{1}
 ```
-            """
+            """.format(
+            read_file_content(
+                str(Path(self.cwd) / "package.json"), add_line_numbers=False
+            ),
+            read_file_content(
+                str(Path(self.cwd) / "src" / "App.tsx"), add_line_numbers=True
+            ),
+        )
 
         project_id = Path(self.cwd).name  # Extract project_id from workspace path
         _, check_results = await perform_code_checks(project_id, self.runner)
