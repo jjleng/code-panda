@@ -174,10 +174,7 @@ class ContextEnricher:
         project_id = Path(self.cwd).name  # Extract project_id from workspace path
         _, check_results = await perform_code_checks(project_id, self.runner)
 
-        error_checks = f"""
-## Error Checks
-{"\n\n".join(check_results)}
-            """
+        error_checks = "## Error Checks\n" + "\n\n".join(check_results)
 
         return no_access_files + "\n" + current_files + "\n" + error_checks
 
