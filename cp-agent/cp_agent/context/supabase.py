@@ -376,6 +376,8 @@ async def supabase_report(project_root: str) -> str:
         "\n".join(function_lines) if function_lines else "No edge functions found"
     )
 
+    newlines = "\n"  # For readability
+
     return textwrap.dedent(
         f"""
 {_format_section("Database Tables and Schema",
@@ -400,7 +402,7 @@ async def supabase_report(project_root: str) -> str:
 
 {_format_section("Secrets",
                 "Secrets available for use in edge functions",
-                "\n".join(f"- {secret['name']}" for secret in project_secrets) if project_secrets else "No project secrets found")}
+                newlines.join(f"- {secret['name']}" for secret in project_secrets) if project_secrets else "No project secrets found")}
 
     """
     )
