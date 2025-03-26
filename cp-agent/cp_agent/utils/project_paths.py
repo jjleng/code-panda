@@ -53,15 +53,24 @@ def _find_router_based_paths(project_root: Path) -> List[str]:
     # Common extensions for web pages
     page_extensions = [".js", ".jsx", ".ts", ".tsx", ".vue", ".svelte"]
 
+    # Router file patterns to search for
+    file_patterns = ["App", "app", "main", "index", "router", "routes"]
+
     # Find all potential router definition files
     router_files: List[Path] = []
-    for ext in page_extensions:
-        router_files.extend(list(project_root.rglob(f"App{ext}")))
-        router_files.extend(list(project_root.rglob(f"app{ext}")))
-        router_files.extend(list(project_root.rglob(f"main{ext}")))
-        router_files.extend(list(project_root.rglob(f"index{ext}")))
-        router_files.extend(list(project_root.rglob(f"router{ext}")))
-        router_files.extend(list(project_root.rglob(f"routes{ext}")))
+
+    def find_files_with_pattern(pattern: str, ext: str) -> List[Path]:
+        """Helper function to find files matching pattern with extension, excluding node_modules."""
+        return [
+            p
+            for p in project_root.rglob(f"{pattern}{ext}")
+            if "node_modules" not in p.parts
+        ]
+
+    # Collect all router files
+    for pattern in file_patterns:
+        for ext in page_extensions:
+            router_files.extend(find_files_with_pattern(pattern, ext))
 
     # Process router files to extract non-parameterized routes
     for file_path in router_files:
