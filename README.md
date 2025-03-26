@@ -4,7 +4,7 @@ CodePanda is an AI-powered vibe-coding tool that helps you build full-stack web 
 
 ## Try it Out
 
-You can play with CodePanda here: [https://www.codepanda.ai/](https://www.codepanda.ai/). The system uses **DeepSeek-Coder v3** model (not the 0324 one) hosted by Fireworks.ai for code generation. Due to resource constraints, you might need to wait in queue to get the access to a workspace. If you encounter any issues, please try again later.
+You can play with CodePanda here: [https://www.codepanda.ai/](https://www.codepanda.ai/). The system uses **DeepSeek-Coder v3** model (not the 0324 one) hosted by Fireworks.ai for code generation. Each workspace runs in its own isolated sandbox, ensuring that your code remains secure. Due to resource constraints, you might need to wait in queue to get the access to a workspace. If you encounter any issues, please try again later.
 
 > **Note**: CodePanda is actively being developed. Open an issue if you encounter any problems or have suggestions for improvement.
 
