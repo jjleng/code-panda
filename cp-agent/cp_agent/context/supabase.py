@@ -31,7 +31,7 @@ When users request features related to database or backend functionality:
      <resources>
      <resource-link url="https://github.com/jjleng/code-panda">View Supabase integration guide</resource-link>
      </resources>
-   - Only provide the the resources when you finish the conversation.
+   - Only provide the resources when you finish the conversation.
 
 3. Monitor Supabase connection status:
    After integration is activated, you can access and discuss:
