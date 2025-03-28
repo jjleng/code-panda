@@ -82,7 +82,9 @@ const MarkdownRenderer: React.FC<Props> = memo(({ text: rawText, streaming, full
         if (!attrs.includes('status=')) {
           attrs += ' status="not_started"';
         }
-        return `<div>\n<sql-block${attrs}>${content}</sql-block>\n</div>`;
+        // Format SQL content to preserve newlines
+        const formattedContent = content.replace(/\n/g, '&#10;');
+        return `<div>\n<sql-block${attrs}>${formattedContent}</sql-block>\n</div>`;
       }
     );
 

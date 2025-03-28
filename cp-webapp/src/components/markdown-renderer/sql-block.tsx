@@ -19,7 +19,10 @@ export interface SqlBlockProps {
 
 // Helper function to extract SQL text from React nodes recursively
 const extractSqlText = (node: React.ReactNode): string => {
-  if (typeof node === 'string') return node;
+  if (typeof node === 'string') {
+    // Replace HTML encoded newlines with actual newlines
+    return node.replace(/&#10;/g, '\n').replace(/&amp;#10;/g, '\n');
+  }
   if (typeof node === 'number' || typeof node === 'boolean') return String(node);
   if (node == null) return '';
 
@@ -37,7 +40,9 @@ const extractSqlText = (node: React.ReactNode): string => {
 
 const SqlBlock = memo(({ children, status = 'not_started', id }: SqlBlockProps) => {
   // Extract the SQL code as a string from children using our helper function
-  const sqlCode = extractSqlText(children);
+  const rawSqlCode = extractSqlText(children);
+
+  const sqlCode = rawSqlCode.replace(/−−/g, '--'); // Replace Unicode minus-minus with standard dashes
 
   // Get context for handling migrations and streaming state
   const { updateSqlBlockStatus, isStreaming } = useSqlBlock();
@@ -113,7 +118,7 @@ const SqlBlock = memo(({ children, status = 'not_started', id }: SqlBlockProps) 
           <Button
             variant="outline"
             size="sm"
-            className="flex items-center gap-2 opacity-70"
+            className="flex w-full items-center justify-center gap-2 opacity-70"
             disabled={true}
           >
             <CheckCircle2 className="h-4 w-4 text-green-500" />
@@ -126,7 +131,7 @@ const SqlBlock = memo(({ children, status = 'not_started', id }: SqlBlockProps) 
             onClick={handleMigrate}
             variant="outline"
             size="sm"
-            className="flex items-center gap-2 bg-red-50"
+            className="flex w-full items-center justify-center gap-2 bg-red-50"
             disabled={!id || isStreaming || migrationMutation.isPending}
           >
             <AlertCircle className="h-4 w-4 text-red-500" />
@@ -141,7 +146,7 @@ const SqlBlock = memo(({ children, status = 'not_started', id }: SqlBlockProps) 
             onClick={handleMigrate}
             variant="outline"
             size="sm"
-            className="flex items-center gap-2"
+            className="flex w-full items-center justify-center gap-2"
             disabled={!id || isStreaming || migrationMutation.isPending}
           >
             <Play className="h-4 w-4" />
@@ -166,7 +171,24 @@ const SqlBlock = memo(({ children, status = 'not_started', id }: SqlBlockProps) 
         </SyntaxHighlighter>
       </div>
 
-      <div className="mt-2">{renderButton()}</div>
+      <div className="mt-2 flex justify-between">
+        <div className="flex w-full flex-col">
+          {renderButton()}
+          {status === 'not_started' && !migrationMutation.isPending && (
+            <span className="mt-1 text-xs text-muted-foreground">
+              <b>Click</b> to apply these changes to your database. Please exercise caution as
+              database changes are critical.
+            </span>
+          )}
+        </div>
+        {status === 'error' && migrationMutation.error && (
+          <div className="ml-2 mt-1 max-w-sm truncate text-xs text-red-500">
+            {migrationMutation.error instanceof Error
+              ? migrationMutation.error.message
+              : 'Unknown error occurred'}
+          </div>
+        )}
+      </div>
     </div>
   );
 });
