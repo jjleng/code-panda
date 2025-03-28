@@ -185,10 +185,11 @@ class CoderAgent(BaseAgent):
         if not passed:
             # Increment consecutive failures counter on build/lint errors
             self.state_manager.tool.consecutive_mistakes += 1
-            logger.warning(
+            logger.info(
                 f"Code checks failed. Consecutive failures: {self.state_manager.tool.consecutive_mistakes}"
             )
         else:
+            logger.info(f"Code checks passed. Consecutive failures reset to 0")
             # Reset counter on successful build/lint
             self.state_manager.tool.consecutive_mistakes = 0
 

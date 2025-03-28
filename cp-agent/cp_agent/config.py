@@ -76,6 +76,11 @@ class Settings(BaseSettings):
     USER_SUPABASE_PAT: str = ""  # Personal Access Token
     LINKED_SUPABASE_PROJECT_ID: str = ""
 
+    # Controls whether linting is skipped by default during code checks
+    # Lint errors sometimes add noise for LLM, so we skip them by default.
+    # Type errors are always checked anyway.
+    SKIP_LINT_BY_DEFAULT: bool = True
+
     model_config = SettingsConfigDict(
         env_prefix="",
         env_file=f".env.{ENV}",
