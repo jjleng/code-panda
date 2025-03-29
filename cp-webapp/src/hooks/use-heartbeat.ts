@@ -16,7 +16,7 @@ interface UseHeartbeatProps {
   onProvisioning?: () => void;
 }
 
-async function restartPreviewServer(projectId: string): Promise<boolean> {
+export async function restartPreviewServer(projectId: string): Promise<boolean> {
   try {
     const { error } = await startProject({
       body: {

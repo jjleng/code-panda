@@ -16,6 +16,7 @@ import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, ArrowRight, ChevronDown, RefreshCw, Smartphone } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { usePreviewContext } from './context';
+import { restartPreviewServer } from '@/hooks/use-heartbeat';
 
 function getProxyUrl(projectId: string | null): string {
   const baseUrl = process.env.NEXT_PUBLIC_PROXY_URL;
@@ -321,14 +322,37 @@ function AddressBar({
 }
 
 function Preview() {
-  const { isInitializingPreview, isPreviewServerReady, projectId } = useProject();
+  const {
+    isInitializingPreview,
+    isPreviewServerReady,
+    projectId,
+    setInitializingPreview,
+    setPreviewServerReady,
+  } = useProject();
   const [key, setKey] = useState(0);
   const { setPreviewPath, refreshCounter } = usePreviewContext();
   const [isMobileView, setIsMobileView] = useState(false);
 
-  const handleRefresh = () => {
-    setKey(prev => prev + 1);
-  };
+  const handleRefresh = useCallback(async () => {
+    if (projectId) {
+      setInitializingPreview(true);
+
+      try {
+        const success = await restartPreviewServer(projectId);
+        setPreviewServerReady(success);
+
+        // Increment key to force iframe refresh
+        setKey(prev => prev + 1);
+      } catch (error) {
+        console.error('Error during refresh/restart:', error);
+        setPreviewServerReady(false);
+      } finally {
+        setInitializingPreview(false);
+      }
+    } else {
+      setKey(prev => prev + 1);
+    }
+  }, [projectId, setInitializingPreview, setPreviewServerReady]);
 
   // Listen for refresh triggers from the context
   useEffect(() => {
@@ -381,7 +405,7 @@ function Preview() {
           </div>
         </>
       ),
-    [key, isMobileView, projectId]
+    [key, isMobileView, projectId, handleRefresh]
   );
 
   if (isInitializingPreview) {
