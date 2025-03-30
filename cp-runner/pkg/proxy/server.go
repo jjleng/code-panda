@@ -143,15 +143,33 @@ func (p *ProxyServer) proxyHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if p.isLoading.Load() {
-		loadingHTML, err := p.readStaticFile("loading.html")
-		if err != nil {
-			log.Printf("Error reading loading.html: %v", err)
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return
+		// Check if request is for HTML or a static asset
+		acceptHeader := strings.ToLower(r.Header.Get("Accept"))
+		path := r.URL.Path
+
+		// Treat requests with Accept header containing "text/html" or requests with
+		// no file extension or ending with "/" as requests for HTML content
+		wantsHTML := strings.Contains(acceptHeader, "text/html") ||
+			!strings.Contains(path[strings.LastIndex(path, "/")+1:], ".") ||
+			strings.HasSuffix(path, "/")
+
+		if wantsHTML {
+			// Serve loading.html for HTML requests
+			loadingHTML, err := p.readStaticFile("loading.html")
+			if err != nil {
+				log.Printf("Error reading loading.html: %v", err)
+				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+				return
+			}
+			w.Header().Set("Content-Type", "text/html")
+			w.WriteHeader(http.StatusOK)
+			w.Write(loadingHTML)
+		} else {
+			// For static assets, return 503 Service Unavailable with Retry-After header
+			w.Header().Set("Retry-After", "2") // Suggest retry after 2 seconds
+			w.Header().Set("Cache-Control", "no-store, no-cache, must-revalidate")
+			http.Error(w, "Service Unavailable - Server is restarting", http.StatusServiceUnavailable)
 		}
-		w.Header().Set("Content-Type", "text/html")
-		w.WriteHeader(http.StatusOK)
-		w.Write(loadingHTML)
 		return
 	}
 

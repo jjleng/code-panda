@@ -264,6 +264,7 @@ func (o *Orchestrator) IsRunning() bool {
 
 	resp, err := client.Do(req)
 	if err != nil {
+		log.Printf("Health check failed for app server on port %d: %v", appPort, err)
 		return false
 	}
 	resp.Body.Close()
