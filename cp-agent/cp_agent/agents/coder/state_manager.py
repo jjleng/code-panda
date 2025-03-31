@@ -55,7 +55,8 @@ class ToolState:
         self.completed_tools: Set[str] = set()
         self.failed_tools: Set[str] = set()
         self.tool_results: list[Dict[str, Any]] = []
-        self.consecutive_mistakes: int = 0
+        self.consecutive_tool_failures: int = 0
+        self.consecutive_code_failures: int = 0
 
     def add_success(
         self,
@@ -67,7 +68,7 @@ class ToolState:
     ) -> None:
         """Record a successful tool execution."""
         self.completed_tools.add(tool_name)
-        self.consecutive_mistakes = 0
+        self.consecutive_tool_failures = 0
 
         self.tool_results.append(
             {
@@ -90,7 +91,7 @@ class ToolState:
     ) -> None:
         """Record a failed tool execution."""
         self.failed_tools.add(tool_name)
-        self.consecutive_mistakes += 1
+        self.consecutive_tool_failures += 1
 
         self.tool_results.append(
             {
@@ -124,7 +125,8 @@ class StateManager:
         self.tool.completed_tools.clear()
         self.tool.failed_tools.clear()
         self.tool.tool_results.clear()
-        self.tool.consecutive_mistakes = 0
+        self.tool.consecutive_tool_failures = 0
+        self.tool.consecutive_code_failures = 0
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert the current state to a dictionary."""
@@ -136,5 +138,6 @@ class StateManager:
             "completed_tools": list(self.tool.completed_tools),
             "failed_tools": list(self.tool.failed_tools),
             "tool_results": self.tool.tool_results,
-            "consecutive_mistakes": self.tool.consecutive_mistakes,
+            "consecutive_tool_failures": self.tool.consecutive_tool_failures,
+            "consecutive_code_failures": self.tool.consecutive_code_failures,
         }

@@ -173,25 +173,31 @@ class CoderAgent(BaseAgent):
         """
         if ctx.status != HookStatus.SUCCESS:
             logger.error(f"Code checks failed to execute: {ctx.error}")
-            self.state_manager.tool.consecutive_mistakes += 1
+            self.state_manager.tool.consecutive_code_failures += 1
+            logger.info(
+                f"Code checks failed. Consecutive failures: {self.state_manager.tool.consecutive_code_failures}"
+            )
             return
 
         if not ctx.result:
             logger.error("Code checks did not return a result")
-            self.state_manager.tool.consecutive_mistakes += 1
+            self.state_manager.tool.consecutive_code_failures += 1
+            logger.info(
+                f"Code checks failed. Consecutive failures: {self.state_manager.tool.consecutive_code_failures}"
+            )
             return
 
         passed, check_results = ctx.result
         if not passed:
             # Increment consecutive failures counter on build/lint errors
-            self.state_manager.tool.consecutive_mistakes += 1
+            self.state_manager.tool.consecutive_code_failures += 1
             logger.info(
-                f"Code checks failed. Consecutive failures: {self.state_manager.tool.consecutive_mistakes}"
+                f"Code checks failed. Consecutive failures: {self.state_manager.tool.consecutive_code_failures}"
             )
         else:
-            logger.info(f"Code checks passed. Consecutive failures reset to 0")
+            logger.info("Code checks passed. Consecutive failures reset to 0")
             # Reset counter on successful build/lint
-            self.state_manager.tool.consecutive_mistakes = 0
+            self.state_manager.tool.consecutive_code_failures = 0
 
         # Store check results in memory for LLM context
         if check_results:
@@ -288,7 +294,10 @@ class CoderAgent(BaseAgent):
 
         try:
             # Check for too many consecutive mistakes
-            if self.state_manager.tool.consecutive_mistakes >= 4:
+            if (
+                self.state_manager.tool.consecutive_tool_failures >= 4
+                or self.state_manager.tool.consecutive_code_failures >= 4
+            ):
                 error_msg = (
                     "Assistant has made too many consecutive mistakes. This may indicate a failure in the "
                     "thought process or inability to use tools properly. Consider providing guidance on "
@@ -303,8 +312,9 @@ class CoderAgent(BaseAgent):
                 # user_message = str(too_many_mistakes())
                 # await self.message_manager.add_memory_item(user_message)
 
-                # Reset mistake counter after getting feedback
-                self.state_manager.tool.consecutive_mistakes = 0
+                # Reset mistake counters after getting feedback
+                self.state_manager.tool.consecutive_tool_failures = 0
+                self.state_manager.tool.consecutive_code_failures = 0
                 return
 
             # Get system prompt
