@@ -166,8 +166,11 @@ class ToolExecutor:
                     f"Tool '{tool_name}' not found",
                 )
 
+            # Convert kebab-case keys to snake_case keys
+            snake_case_params = {k.replace("-", "_"): v for k, v in params.items()}
+
             tool = self._tools[tool_name]
-            return await tool.execute(**params)
+            return await tool.execute(**snake_case_params)
 
         except ToolError:
             # Re-raise ToolError directly
