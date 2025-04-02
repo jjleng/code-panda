@@ -1,6 +1,7 @@
 """Project management API endpoints."""
 
 import os
+import re
 from datetime import datetime
 from pathlib import Path
 from typing import List
@@ -313,12 +314,14 @@ async def upload_assets(
 async def generate_summary(
     project_id: str,
     request: GenerateSummaryRequest,
+    background_tasks: BackgroundTasks,
 ) -> GenerateSummaryResponse:
     """Generate a project name and description based on the user's first message.
 
     Args:
         project_id: The ID of the project
         request: Contains the user's message
+        background_tasks: FastAPI background tasks for background operations
 
     Returns:
         Generated name and description for the project
@@ -340,6 +343,12 @@ async def generate_summary(
         # Generate project name and description
         logger.info(f"Generating summary for project {project_id}")
         summary = await generate_project_summary(request.message)
+
+        # Update index.html title in background
+        project_root = os.path.join(settings.WORKSPACE_PATH, project_id)
+        background_tasks.add_task(
+            _update_project_title, project_root, summary.name, project_id
+        )
 
         logger.info(f"Successfully generated summary for project {project_id}")
         return GenerateSummaryResponse(
@@ -567,3 +576,56 @@ def _cleanup_zip_file(zip_path: str) -> None:
             logger.debug(f"Successfully removed temporary zip file: {zip_path}")
     except Exception as e:
         logger.error(f"Error cleaning up temporary zip file {zip_path}: {str(e)}")
+
+
+async def _update_project_title(project_root: str, title: str, project_id: str) -> None:
+    """Update the title in index.html and create a git snapshot.
+
+    Args:
+        project_root: Path to the project root
+        title: New title for the webpage
+        project_id: ID of the project for logging
+    """
+    index_html_path = os.path.join(project_root, "index.html")
+
+    if not os.path.exists(index_html_path):
+        logger.warning(
+            f"index.html not found for project {project_id}, title not updated"
+        )
+        return
+
+    try:
+        # Read the current index.html content
+        with open(index_html_path, "r") as f:
+            content = f.read()
+
+        # Replace the title using regex for more reliable matching with case insensitivity
+        pattern = r"<title>(.*?)<\/title>"
+
+        # Check if a title tag exists in the file
+        if not re.search(pattern, content, re.IGNORECASE):
+            logger.warning(f"No title tag found in index.html for project {project_id}")
+            return
+
+        # Replace the title tag content with case insensitivity
+        updated_content = re.sub(
+            pattern, f"<title>{title}</title>", content, flags=re.IGNORECASE
+        )
+
+        # Write the updated content back
+        with open(index_html_path, "w") as f:
+            f.write(updated_content)
+
+        logger.info(f"Updated index.html title to '{title}' for project {project_id}")
+
+        # Create git snapshot
+        commit_message = await create_snapshot(project_root)
+        if commit_message:
+            logger.info(f"Git snapshot created with message: {commit_message}")
+        else:
+            logger.info("No changes to commit in git snapshot")
+
+    except Exception as e:
+        logger.warning(
+            f"Failed to update index.html title for project {project_id}: {str(e)}"
+        )
