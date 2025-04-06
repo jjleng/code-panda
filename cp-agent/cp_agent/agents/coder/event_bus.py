@@ -45,6 +45,7 @@ class EventType(Enum):
 
     HOOK_FAILED = auto()
     USAGE_UPDATED = auto()
+    MIGRATION_FAILED = auto()
 
 
 class EventBus:

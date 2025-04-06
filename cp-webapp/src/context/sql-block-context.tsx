@@ -4,6 +4,7 @@ import React, { createContext, useCallback, useContext } from 'react';
 interface SqlBlockContextType {
   updateSqlBlockStatus: (id: string, status: SqlBlockStatus) => void;
   isStreaming: boolean;
+  requestFixMessage: (message: string) => void;
 }
 
 const SqlBlockContext = createContext<SqlBlockContextType | undefined>(undefined);
@@ -12,12 +13,14 @@ interface SqlBlockProviderProps {
   children: React.ReactNode;
   onStatusChange?: (id: string, status: SqlBlockStatus) => void;
   isStreaming?: boolean;
+  requestFixMessage?: (message: string) => void;
 }
 
 export const SqlBlockProvider = ({
   children,
   onStatusChange,
   isStreaming = false,
+  requestFixMessage = () => {},
 }: SqlBlockProviderProps) => {
   const updateSqlBlockStatus = useCallback(
     (id: string, status: SqlBlockStatus) => {
@@ -29,7 +32,7 @@ export const SqlBlockProvider = ({
   );
 
   return (
-    <SqlBlockContext.Provider value={{ updateSqlBlockStatus, isStreaming }}>
+    <SqlBlockContext.Provider value={{ updateSqlBlockStatus, isStreaming, requestFixMessage }}>
       {children}
     </SqlBlockContext.Provider>
   );

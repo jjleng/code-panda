@@ -108,6 +108,9 @@ class CoderAgent(BaseAgent):
         self.event_bus.subscribe_async(
             EventType.MEMORY_COMPACT_REQUESTED, self._on_memory_compact_requested
         )
+        self.event_bus.subscribe_async(
+            EventType.MIGRATION_FAILED, self._on_migration_failed
+        )
 
     async def _on_memory_compact_requested(self, data: Dict[str, Any]) -> None:
         """Handle memory compaction request events."""
@@ -118,6 +121,31 @@ class CoderAgent(BaseAgent):
             logger.info(f"Memory compaction completed successfully (reason: {reason})")
         except Exception as e:
             logger.error(f"Memory compaction failed: {str(e)}")
+
+    async def _on_migration_failed(self, data: Dict[str, Any]) -> None:
+        """Handle migration failure events and add error details to memory."""
+        migration_name = data.get("migration_name", "unknown")
+        error_message = data.get("error", "Unknown error")
+        path = data.get("path", "unknown path")
+
+        logger.warning(f"Migration '{migration_name}' failed: {error_message}")
+
+        # Format the error message for the LLM's context
+        formatted_error = (
+            f"[Migration Failure]\n"
+            f"Migration Name: {migration_name}\n"
+            f"File Path: {path}\n"
+            f"Error: {error_message}"
+        )
+
+        try:
+            # Add the formatted error to the agent's memory
+            await self.message_manager.add_memory_item(formatted_error)
+            logger.info(
+                f"Added migration failure details for '{migration_name}' to memory."
+            )
+        except Exception as e:
+            logger.error(f"Failed to add migration failure details to memory: {str(e)}")
 
     def set_preview_path(self, preview_path: str) -> None:
         """Set the current preview path being viewed by the user."""

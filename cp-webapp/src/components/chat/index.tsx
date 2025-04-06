@@ -307,8 +307,19 @@ const ChatView = ({ disabled, messages, isStreaming, sendMessage, stop }: ChatVi
 const ChatStreamController = ({ disabled }: { disabled?: boolean }) => {
   const { messages, isStreaming, sendMessage, stop, handleSqlBlockStatusChange } = useChatStream();
 
+  const handleRequestFixMessage = useCallback(
+    (message: string) => {
+      sendMessage(message, []);
+    },
+    [sendMessage]
+  );
+
   return (
-    <SqlBlockProvider onStatusChange={handleSqlBlockStatusChange} isStreaming={isStreaming}>
+    <SqlBlockProvider
+      onStatusChange={handleSqlBlockStatusChange}
+      isStreaming={isStreaming}
+      requestFixMessage={handleRequestFixMessage}
+    >
       <ChatView
         disabled={disabled}
         messages={messages}
