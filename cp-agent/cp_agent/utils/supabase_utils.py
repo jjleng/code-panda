@@ -365,7 +365,13 @@ class SupabaseUtil:
                 headers=headers,
                 json={"query": query},
             )
-            response.raise_for_status()
+            if not response.is_success:
+                error_content = response.text
+                logger.error(
+                    f"Supabase query failed: {response.status_code} - {error_content}"
+                )
+                # Raise a ValueError with the actual error message from Supabase
+                raise ValueError(f"Supabase query failed: {error_content}")
             return response.json()
 
     async def get_storage_buckets(self) -> list[StorageAsyncBucket]:

@@ -44,8 +44,8 @@ const SqlBlock = memo(({ children, status = 'not_started', id }: SqlBlockProps) 
 
   const sqlCode = rawSqlCode.replace(/−−/g, '--'); // Replace Unicode minus-minus with standard dashes
 
-  // Get context for handling migrations and streaming state
-  const { updateSqlBlockStatus, isStreaming } = useSqlBlock();
+  // Get context for handling migrations, streaming state, and requesting fixes
+  const { updateSqlBlockStatus, isStreaming, requestFixMessage } = useSqlBlock();
   const { projectId } = useProject();
   const { toast } = useToast();
 
@@ -74,7 +74,7 @@ const SqlBlock = memo(({ children, status = 'not_started', id }: SqlBlockProps) 
         },
         body: {
           sql: sqlCode,
-          name: `Migration from SQL block ${id}`,
+          name: `Migration from SQL block <sql-block>${sqlCode}</sql-block>`,
         },
       });
 
@@ -104,11 +104,37 @@ const SqlBlock = memo(({ children, status = 'not_started', id }: SqlBlockProps) 
 
       toast({
         title: 'SQL Migration Failed',
-        description: error instanceof Error ? error.message : 'An unknown error occurred',
+        // @ts-expect-error ignore
+        description: error?.detail ?? 'An unknown error occurred',
         variant: 'destructive',
       });
     }
   }, [id, projectId, sqlCode, updateSqlBlockStatus, migrationMutation, toast]);
+
+  const requestMigrationFix = useCallback(async () => {
+    if (!id || !projectId) {
+      console.error('Cannot request migration fix: missing ID or project ID');
+      return;
+    }
+
+    const messageContent = `The previous migration attempt failed. Please review the error message and provide a corrected sql block`;
+
+    try {
+      requestFixMessage(messageContent);
+
+      toast({
+        title: 'Request Sent',
+        description: 'Asked the assistant to fix the failed SQL migration.',
+      });
+    } catch (error) {
+      console.error('Error sending message to agent:', error);
+      toast({
+        title: 'Error Sending Request',
+        description: 'Could not ask the assistant for a fix.',
+        variant: 'destructive',
+      });
+    }
+  }, [id, projectId, requestFixMessage, toast]);
 
   // Render the appropriate button based on status
   const renderButton = () => {
@@ -128,7 +154,7 @@ const SqlBlock = memo(({ children, status = 'not_started', id }: SqlBlockProps) 
       case 'error':
         return (
           <Button
-            onClick={handleMigrate}
+            onClick={requestMigrationFix}
             variant="outline"
             size="sm"
             className="flex w-full items-center justify-center gap-2 bg-red-50"
@@ -180,14 +206,13 @@ const SqlBlock = memo(({ children, status = 'not_started', id }: SqlBlockProps) 
               database changes are critical.
             </span>
           )}
+          {status === 'error' && migrationMutation.error && (
+            <div className="ml-2 mt-1 max-w-sm truncate text-xs text-red-500">
+              {/* @ts-expect-error ignore */}
+              {migrationMutation.error?.detail ?? 'Unknown error occurred'}
+            </div>
+          )}
         </div>
-        {status === 'error' && migrationMutation.error && (
-          <div className="ml-2 mt-1 max-w-sm truncate text-xs text-red-500">
-            {migrationMutation.error instanceof Error
-              ? migrationMutation.error.message
-              : 'Unknown error occurred'}
-          </div>
-        )}
       </div>
     </div>
   );

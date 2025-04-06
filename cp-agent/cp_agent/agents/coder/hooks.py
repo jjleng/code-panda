@@ -599,6 +599,22 @@ class HookManager:
             logger.warning(
                 f"Failed to deploy migrations: {', '.join(failed_migrations)}"
             )
+            # Publish an event for each failed migration
+            for result in ctx.result:
+                if not result.get("success"):
+                    try:
+                        await self.event_bus.publish_async(
+                            EventType.MIGRATION_FAILED,
+                            {
+                                "migration_name": result.get(
+                                    "migration_name", "unknown"
+                                ),
+                                "error": result.get("error", "Unknown error"),
+                                "path": result.get("path"),
+                            },
+                        )
+                    except Exception as e:
+                        logger.error(f"Failed to publish MIGRATION_FAILED event: {e}")
 
         # Request memory compaction via event bus after successful migration operations
         if successful_migrations:
