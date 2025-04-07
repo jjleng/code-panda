@@ -431,21 +431,10 @@ async def execute_migration(
             error_detail = raw_result.get("error", "Unknown error")
             logger.error(f"Migration failed for project {project_id}: {error_detail}")
             # Add error to agent memory
-            try:
-                agent = await get_agent(project_id)
-                formatted_error = (
-                    f"[Migration Failure via API]\n"
-                    f"Migration Name: {raw_result.get('name', migration.name or 'unnamed')}\n"
-                    f"Error: {error_detail}"
-                )
-                await agent.message_manager.add_memory_item(formatted_error)
-                logger.info(
-                    f"Added API migration failure details for project {project_id} to memory."
-                )
-            except Exception as mem_e:
-                logger.error(
-                    f"Failed to add API migration failure to agent memory: {mem_e}"
-                )
+            migration_name = raw_result.get("name", migration.name or "unnamed")
+            await _add_migration_error_to_memory(
+                project_id, migration_name, error_detail
+            )
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Migration failed: {error_detail}",
@@ -479,21 +468,9 @@ async def execute_migration(
             f"Error executing migration for project {project_id}: {error_detail}"
         )
         # Add error to agent memory
-        try:
-            agent = await get_agent(project_id)
-            formatted_error = (
-                f"[Migration Failure via API]\n"
-                f"Migration Name: {migration.name or 'unnamed'}\n"
-                f"Error: {error_detail}"
-            )
-            await agent.message_manager.add_memory_item(formatted_error)
-            logger.info(
-                f"Added API migration failure details for project {project_id} to memory."
-            )
-        except Exception as mem_e:
-            logger.error(
-                f"Failed to add API migration failure to agent memory: {mem_e}"
-            )
+        await _add_migration_error_to_memory(
+            project_id, migration.name or "unnamed", error_detail
+        )
         # Raise the original HTTP exception
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=error_detail
@@ -667,3 +644,28 @@ async def _update_project_title(project_root: str, title: str, project_id: str) 
         logger.warning(
             f"Failed to update index.html title for project {project_id}: {str(e)}"
         )
+
+
+async def _add_migration_error_to_memory(
+    project_id: str, migration_name: str, error_detail: str
+) -> None:
+    """Add migration error details to the agent's memory.
+
+    Args:
+        project_id: The ID of the project
+        migration_name: Name of the migration that failed
+        error_detail: Error message or details
+    """
+    try:
+        agent = await get_agent(project_id)
+        formatted_error = (
+            f"[Migration Failure via API]\n"
+            f"Migration Name: {migration_name}\n"
+            f"Error: {error_detail}"
+        )
+        await agent.message_manager.add_memory_item(formatted_error)
+        logger.info(
+            f"Added API migration failure details for project {project_id} to memory."
+        )
+    except Exception as mem_e:
+        logger.error(f"Failed to add API migration failure to agent memory: {mem_e}")
