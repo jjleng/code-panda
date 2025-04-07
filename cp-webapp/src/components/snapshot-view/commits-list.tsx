@@ -22,6 +22,7 @@ import { Commit } from '@/generated/runner/types.gen';
 import { GitCommit } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useSnapshotContext } from './context';
+import { convertToISO8601 } from '@/lib/utils';
 
 interface CommitsListProps {
   commits: Commit[];
@@ -156,7 +157,7 @@ export const CommitsList: React.FC<CommitsListProps> = ({
                         </div>
                         <div className="line-clamp-2 break-words text-sm">{commit.message}</div>
                         <div className="text-xs text-gray-500 dark:text-gray-400">
-                          {new Date(commit.date).toLocaleString(undefined, {
+                          {new Date(convertToISO8601(commit.date)).toLocaleString(undefined, {
                             year: 'numeric',
                             month: 'numeric',
                             day: 'numeric',
