@@ -556,6 +556,8 @@ export function useChatStream() {
         }
       } finally {
         cleanupThinking();
+        // Mark any tools still in 'started' state as 'failed' when the stream ends
+        markPendingToolsAsFailed();
         setIsStreaming(false);
         setAbortController(null);
 
