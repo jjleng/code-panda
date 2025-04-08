@@ -230,54 +230,75 @@ const ChatView = ({ disabled, messages, isStreaming, sendMessage, stop }: ChatVi
         )}
 
         {/* Render all messages directly */}
-        {messages.map((message, index) => (
-          <div key={`message-${index}`} className="p-4">
-            {isAssistantMessage(message) ? (
-              <AssistantChatBubble
-                message={{
-                  ...message,
-                  timestamp: new Date(message.timestamp || Date.now()),
-                }}
-                streaming={isStreaming && index === messages.length - 1}
-              />
-            ) : (
-              <UserChatBubble
-                message={{
-                  ...message,
-                  role: 'user',
-                  timestamp: new Date(message.timestamp || Date.now()),
-                }}
-              />
-            )}
-          </div>
-        ))}
+        {messages.map((message, index) => {
+          const isLastMessage = index === messages.length - 1;
+          const isLastAssistantMessage = isLastMessage && isAssistantMessage(message);
+
+          // Skip rendering the last assistant message if it's empty AND the stream was canceled
+          // (The dedicated "canceled" bubble below will handle showing the message)
+          if (isLastAssistantMessage && !message.content && wasCanceled) {
+            return null;
+          }
+
+          return (
+            <div key={`message-${index}`} className="p-4">
+              {isAssistantMessage(message) ? (
+                <AssistantChatBubble
+                  message={{
+                    ...message,
+                    timestamp: new Date(message.timestamp || Date.now()),
+                  }}
+                  // Pass streaming status only if it's the last message and assistant
+                  streaming={isStreaming && isLastAssistantMessage}
+                />
+              ) : (
+                <UserChatBubble
+                  message={{
+                    ...message,
+                    role: 'user',
+                    timestamp: new Date(message.timestamp || Date.now()),
+                  }}
+                />
+              )}
+            </div>
+          );
+        })}
 
         {/* Show streaming indicator or canceled message when appropriate */}
-        {(isStreaming || wasCanceled) &&
-          // Only show the streaming/canceled bubble if:
-          // 1. There are no messages, OR
-          // 2. The last message is not from assistant, OR
-          // 3. The last message is from assistant but has no content
-          // 4. AND we're not currently streaming to the last message (which would mean it already exists)
-          (!messages.length ||
-            messages[messages.length - 1].role !== 'assistant' ||
-            !messages[messages.length - 1].content) &&
-          !(
-            isStreaming &&
-            messages.length &&
-            messages[messages.length - 1].role === 'assistant'
-          ) && (
+        {/* Show canceled message bubble ONLY if needed */}
+        {(() => {
+          // Show canceled message if:
+          // 1. Stream was canceled (`wasCanceled` is true)
+          // 2. AND EITHER:
+          //    a) There are no messages OR
+          //    b) The last message is not an assistant message OR
+          //    c) The last message IS an assistant message BUT it has no content
+          //       (This covers the case where the map loop returned null for the empty canceled bubble)
+          const showCanceledMessage =
+            wasCanceled &&
+            (!messages.length ||
+              messages[messages.length - 1].role !== 'assistant' ||
+              !messages[messages.length - 1].content);
+
+          // If condition not met, no extra bubble needed
+          if (!showCanceledMessage) {
+            return null;
+          }
+
+          // Render the "Stream canceled" bubble
+          return (
             <div className="p-4">
               <AssistantChatBubble
                 message={{
                   role: 'assistant',
-                  content: wasCanceled ? 'Stream canceled' : '',
+                  content: 'Stream canceled', // Always show canceled message here
                   timestamp: new Date(),
                 }}
-                streaming={isStreaming}
+                streaming={false} // Canceled stream is not streaming
               />
             </div>
-          )}
+          );
+        })()}
       </div>
 
       <div className="mt-auto p-3">
