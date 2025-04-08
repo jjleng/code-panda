@@ -51,3 +51,16 @@ class ListProjectPathsResponse(BaseModel):
     """Response model for listing project paths."""
 
     paths: List[str]
+
+
+class SwitchCommitRequest(BaseModel):
+    """Request model for switching git commit."""
+
+    commit_hash: str = Field(..., description="The git commit hash to switch to")
+
+
+class SwitchCommitResponse(BaseModel):
+    """Response model for switching git commit."""
+
+    message: str = Field(..., description="Success or error message")
+    success: bool = Field(..., description="Whether the switch was successful")

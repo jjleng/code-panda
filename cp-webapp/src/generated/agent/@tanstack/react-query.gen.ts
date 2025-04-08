@@ -2,8 +2,8 @@
 
 import type { Options } from '@hey-api/client-fetch';
 import { queryOptions, type UseMutationOptions } from '@tanstack/react-query';
-import type { ChatApiV1ChatPostData, ChatApiV1ChatPostError, CreateProjectApiV1ProjectsPostData, CreateProjectApiV1ProjectsPostError, CreateProjectApiV1ProjectsPostResponse, IntegrateSupabaseWithProjectApiV1ProjectsProjectIdIntegrateSupabasePostData, IntegrateSupabaseWithProjectApiV1ProjectsProjectIdIntegrateSupabasePostError, IntegrateSupabaseWithProjectApiV1ProjectsProjectIdIntegrateSupabasePostResponse, SetProjectSecretApiV1ProjectsProjectIdSecretsPostData, SetProjectSecretApiV1ProjectsProjectIdSecretsPostError, SetProjectSecretApiV1ProjectsProjectIdSecretsPostResponse, UploadAssetsApiV1ProjectsProjectIdUploadPostData, UploadAssetsApiV1ProjectsProjectIdUploadPostError, UploadAssetsApiV1ProjectsProjectIdUploadPostResponse, GenerateSummaryApiV1ProjectsProjectIdGenerateSummaryPostData, GenerateSummaryApiV1ProjectsProjectIdGenerateSummaryPostError, GenerateSummaryApiV1ProjectsProjectIdGenerateSummaryPostResponse, ExecuteMigrationApiV1ProjectsProjectIdMigrationsPostData, ExecuteMigrationApiV1ProjectsProjectIdMigrationsPostError, ExecuteMigrationApiV1ProjectsProjectIdMigrationsPostResponse, ListProjectPathsApiV1ProjectsProjectIdPathsGetData, DownloadProjectApiV1ProjectsProjectIdDownloadGetData, RootGetData, HealthCheckHealthGetData } from '../types.gen';
-import { chatApiV1ChatPost, createProjectApiV1ProjectsPost, integrateSupabaseWithProjectApiV1ProjectsProjectIdIntegrateSupabasePost, setProjectSecretApiV1ProjectsProjectIdSecretsPost, uploadAssetsApiV1ProjectsProjectIdUploadPost, generateSummaryApiV1ProjectsProjectIdGenerateSummaryPost, executeMigrationApiV1ProjectsProjectIdMigrationsPost, listProjectPathsApiV1ProjectsProjectIdPathsGet, downloadProjectApiV1ProjectsProjectIdDownloadGet, rootGet, healthCheckHealthGet, client } from '../sdk.gen';
+import type { ChatApiV1ChatPostData, ChatApiV1ChatPostError, HeartbeatApiV1HeartbeatPostData, HeartbeatApiV1HeartbeatPostError, HeartbeatApiV1HeartbeatPostResponse, CreateProjectApiV1ProjectsPostData, CreateProjectApiV1ProjectsPostError, CreateProjectApiV1ProjectsPostResponse, IntegrateSupabaseWithProjectApiV1ProjectsProjectIdIntegrateSupabasePostData, IntegrateSupabaseWithProjectApiV1ProjectsProjectIdIntegrateSupabasePostError, IntegrateSupabaseWithProjectApiV1ProjectsProjectIdIntegrateSupabasePostResponse, SetProjectSecretApiV1ProjectsProjectIdSecretsPostData, SetProjectSecretApiV1ProjectsProjectIdSecretsPostError, SetProjectSecretApiV1ProjectsProjectIdSecretsPostResponse, UploadAssetsApiV1ProjectsProjectIdUploadPostData, UploadAssetsApiV1ProjectsProjectIdUploadPostError, UploadAssetsApiV1ProjectsProjectIdUploadPostResponse, GenerateSummaryApiV1ProjectsProjectIdGenerateSummaryPostData, GenerateSummaryApiV1ProjectsProjectIdGenerateSummaryPostError, GenerateSummaryApiV1ProjectsProjectIdGenerateSummaryPostResponse, ExecuteMigrationApiV1ProjectsProjectIdMigrationsPostData, ExecuteMigrationApiV1ProjectsProjectIdMigrationsPostError, ExecuteMigrationApiV1ProjectsProjectIdMigrationsPostResponse, ListProjectPathsApiV1ProjectsProjectIdPathsGetData, DownloadProjectApiV1ProjectsProjectIdDownloadGetData, SwitchCommitApiV1ProjectsProjectIdSwitchCommitPostData, SwitchCommitApiV1ProjectsProjectIdSwitchCommitPostError, SwitchCommitApiV1ProjectsProjectIdSwitchCommitPostResponse, CreateSubdomainApiV1ProjectsProjectIdSubdomainPutData, CreateSubdomainApiV1ProjectsProjectIdSubdomainPutError, CreateSubdomainApiV1ProjectsProjectIdSubdomainPutResponse, EditProjectSubdomainApiV1ProjectsProjectIdSubdomainEditPutData, EditProjectSubdomainApiV1ProjectsProjectIdSubdomainEditPutError, EditProjectSubdomainApiV1ProjectsProjectIdSubdomainEditPutResponse, DeleteSubdomainApiV1ProjectsProjectIdSubdomainDomainDeleteData, DeleteSubdomainApiV1ProjectsProjectIdSubdomainDomainDeleteError, DeleteSubdomainApiV1ProjectsProjectIdSubdomainDomainDeleteResponse, GetProjectPublishHistoryApiV1ProjectsProjectIdPublishHistoryGetData, PublishProjectApiV1ProjectsProjectIdPublishPostData, PublishProjectApiV1ProjectsProjectIdPublishPostError, PublishProjectApiV1ProjectsProjectIdPublishPostResponse, GetDomainStatusApiV1ProjectsProjectIdDomainStatusDomainGetData, GetCreditsApiV1SubscriptionsCreditsGetData, RootGetData, HealthCheckHealthGetData, MetricsMetricsGetData } from '../types.gen';
+import { chatApiV1ChatPost, heartbeatApiV1HeartbeatPost, createProjectApiV1ProjectsPost, integrateSupabaseWithProjectApiV1ProjectsProjectIdIntegrateSupabasePost, setProjectSecretApiV1ProjectsProjectIdSecretsPost, uploadAssetsApiV1ProjectsProjectIdUploadPost, generateSummaryApiV1ProjectsProjectIdGenerateSummaryPost, executeMigrationApiV1ProjectsProjectIdMigrationsPost, listProjectPathsApiV1ProjectsProjectIdPathsGet, downloadProjectApiV1ProjectsProjectIdDownloadGet, switchCommitApiV1ProjectsProjectIdSwitchCommitPost, createSubdomainApiV1ProjectsProjectIdSubdomainPut, editProjectSubdomainApiV1ProjectsProjectIdSubdomainEditPut, deleteSubdomainApiV1ProjectsProjectIdSubdomainDomainDelete, getProjectPublishHistoryApiV1ProjectsProjectIdPublishHistoryGet, publishProjectApiV1ProjectsProjectIdPublishPost, getDomainStatusApiV1ProjectsProjectIdDomainStatusDomainGet, getCreditsApiV1SubscriptionsCreditsGet, rootGet, healthCheckHealthGet, metricsMetricsGet, client } from '../sdk.gen';
 
 type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
@@ -55,6 +55,39 @@ export const chatApiV1ChatPostMutation = (options?: Partial<Options<ChatApiV1Cha
     const mutationOptions: UseMutationOptions<unknown, ChatApiV1ChatPostError, Options<ChatApiV1ChatPostData>> = {
         mutationFn: async (localOptions) => {
             const { data } = await chatApiV1ChatPost({
+                ...options,
+                ...localOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const heartbeatApiV1HeartbeatPostQueryKey = (options?: Options<HeartbeatApiV1HeartbeatPostData>) => [
+    createQueryKey('heartbeatApiV1HeartbeatPost', options)
+];
+
+export const heartbeatApiV1HeartbeatPostOptions = (options?: Options<HeartbeatApiV1HeartbeatPostData>) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await heartbeatApiV1HeartbeatPost({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true
+            });
+            return data;
+        },
+        queryKey: heartbeatApiV1HeartbeatPostQueryKey(options)
+    });
+};
+
+export const heartbeatApiV1HeartbeatPostMutation = (options?: Partial<Options<HeartbeatApiV1HeartbeatPostData>>) => {
+    const mutationOptions: UseMutationOptions<HeartbeatApiV1HeartbeatPostResponse, HeartbeatApiV1HeartbeatPostError, Options<HeartbeatApiV1HeartbeatPostData>> = {
+        mutationFn: async (localOptions) => {
+            const { data } = await heartbeatApiV1HeartbeatPost({
                 ...options,
                 ...localOptions,
                 throwOnError: true
@@ -301,6 +334,171 @@ export const downloadProjectApiV1ProjectsProjectIdDownloadGetOptions = (options:
     });
 };
 
+export const switchCommitApiV1ProjectsProjectIdSwitchCommitPostQueryKey = (options: Options<SwitchCommitApiV1ProjectsProjectIdSwitchCommitPostData>) => [
+    createQueryKey('switchCommitApiV1ProjectsProjectIdSwitchCommitPost', options)
+];
+
+export const switchCommitApiV1ProjectsProjectIdSwitchCommitPostOptions = (options: Options<SwitchCommitApiV1ProjectsProjectIdSwitchCommitPostData>) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await switchCommitApiV1ProjectsProjectIdSwitchCommitPost({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true
+            });
+            return data;
+        },
+        queryKey: switchCommitApiV1ProjectsProjectIdSwitchCommitPostQueryKey(options)
+    });
+};
+
+export const switchCommitApiV1ProjectsProjectIdSwitchCommitPostMutation = (options?: Partial<Options<SwitchCommitApiV1ProjectsProjectIdSwitchCommitPostData>>) => {
+    const mutationOptions: UseMutationOptions<SwitchCommitApiV1ProjectsProjectIdSwitchCommitPostResponse, SwitchCommitApiV1ProjectsProjectIdSwitchCommitPostError, Options<SwitchCommitApiV1ProjectsProjectIdSwitchCommitPostData>> = {
+        mutationFn: async (localOptions) => {
+            const { data } = await switchCommitApiV1ProjectsProjectIdSwitchCommitPost({
+                ...options,
+                ...localOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const createSubdomainApiV1ProjectsProjectIdSubdomainPutMutation = (options?: Partial<Options<CreateSubdomainApiV1ProjectsProjectIdSubdomainPutData>>) => {
+    const mutationOptions: UseMutationOptions<CreateSubdomainApiV1ProjectsProjectIdSubdomainPutResponse, CreateSubdomainApiV1ProjectsProjectIdSubdomainPutError, Options<CreateSubdomainApiV1ProjectsProjectIdSubdomainPutData>> = {
+        mutationFn: async (localOptions) => {
+            const { data } = await createSubdomainApiV1ProjectsProjectIdSubdomainPut({
+                ...options,
+                ...localOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const editProjectSubdomainApiV1ProjectsProjectIdSubdomainEditPutMutation = (options?: Partial<Options<EditProjectSubdomainApiV1ProjectsProjectIdSubdomainEditPutData>>) => {
+    const mutationOptions: UseMutationOptions<EditProjectSubdomainApiV1ProjectsProjectIdSubdomainEditPutResponse, EditProjectSubdomainApiV1ProjectsProjectIdSubdomainEditPutError, Options<EditProjectSubdomainApiV1ProjectsProjectIdSubdomainEditPutData>> = {
+        mutationFn: async (localOptions) => {
+            const { data } = await editProjectSubdomainApiV1ProjectsProjectIdSubdomainEditPut({
+                ...options,
+                ...localOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const deleteSubdomainApiV1ProjectsProjectIdSubdomainDomainDeleteMutation = (options?: Partial<Options<DeleteSubdomainApiV1ProjectsProjectIdSubdomainDomainDeleteData>>) => {
+    const mutationOptions: UseMutationOptions<DeleteSubdomainApiV1ProjectsProjectIdSubdomainDomainDeleteResponse, DeleteSubdomainApiV1ProjectsProjectIdSubdomainDomainDeleteError, Options<DeleteSubdomainApiV1ProjectsProjectIdSubdomainDomainDeleteData>> = {
+        mutationFn: async (localOptions) => {
+            const { data } = await deleteSubdomainApiV1ProjectsProjectIdSubdomainDomainDelete({
+                ...options,
+                ...localOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const getProjectPublishHistoryApiV1ProjectsProjectIdPublishHistoryGetQueryKey = (options: Options<GetProjectPublishHistoryApiV1ProjectsProjectIdPublishHistoryGetData>) => [
+    createQueryKey('getProjectPublishHistoryApiV1ProjectsProjectIdPublishHistoryGet', options)
+];
+
+export const getProjectPublishHistoryApiV1ProjectsProjectIdPublishHistoryGetOptions = (options: Options<GetProjectPublishHistoryApiV1ProjectsProjectIdPublishHistoryGetData>) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getProjectPublishHistoryApiV1ProjectsProjectIdPublishHistoryGet({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true
+            });
+            return data;
+        },
+        queryKey: getProjectPublishHistoryApiV1ProjectsProjectIdPublishHistoryGetQueryKey(options)
+    });
+};
+
+export const publishProjectApiV1ProjectsProjectIdPublishPostQueryKey = (options: Options<PublishProjectApiV1ProjectsProjectIdPublishPostData>) => [
+    createQueryKey('publishProjectApiV1ProjectsProjectIdPublishPost', options)
+];
+
+export const publishProjectApiV1ProjectsProjectIdPublishPostOptions = (options: Options<PublishProjectApiV1ProjectsProjectIdPublishPostData>) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await publishProjectApiV1ProjectsProjectIdPublishPost({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true
+            });
+            return data;
+        },
+        queryKey: publishProjectApiV1ProjectsProjectIdPublishPostQueryKey(options)
+    });
+};
+
+export const publishProjectApiV1ProjectsProjectIdPublishPostMutation = (options?: Partial<Options<PublishProjectApiV1ProjectsProjectIdPublishPostData>>) => {
+    const mutationOptions: UseMutationOptions<PublishProjectApiV1ProjectsProjectIdPublishPostResponse, PublishProjectApiV1ProjectsProjectIdPublishPostError, Options<PublishProjectApiV1ProjectsProjectIdPublishPostData>> = {
+        mutationFn: async (localOptions) => {
+            const { data } = await publishProjectApiV1ProjectsProjectIdPublishPost({
+                ...options,
+                ...localOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const getDomainStatusApiV1ProjectsProjectIdDomainStatusDomainGetQueryKey = (options: Options<GetDomainStatusApiV1ProjectsProjectIdDomainStatusDomainGetData>) => [
+    createQueryKey('getDomainStatusApiV1ProjectsProjectIdDomainStatusDomainGet', options)
+];
+
+export const getDomainStatusApiV1ProjectsProjectIdDomainStatusDomainGetOptions = (options: Options<GetDomainStatusApiV1ProjectsProjectIdDomainStatusDomainGetData>) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getDomainStatusApiV1ProjectsProjectIdDomainStatusDomainGet({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true
+            });
+            return data;
+        },
+        queryKey: getDomainStatusApiV1ProjectsProjectIdDomainStatusDomainGetQueryKey(options)
+    });
+};
+
+export const getCreditsApiV1SubscriptionsCreditsGetQueryKey = (options?: Options<GetCreditsApiV1SubscriptionsCreditsGetData>) => [
+    createQueryKey('getCreditsApiV1SubscriptionsCreditsGet', options)
+];
+
+export const getCreditsApiV1SubscriptionsCreditsGetOptions = (options?: Options<GetCreditsApiV1SubscriptionsCreditsGetData>) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getCreditsApiV1SubscriptionsCreditsGet({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true
+            });
+            return data;
+        },
+        queryKey: getCreditsApiV1SubscriptionsCreditsGetQueryKey(options)
+    });
+};
+
 export const rootGetQueryKey = (options?: Options<RootGetData>) => [
     createQueryKey('rootGet', options)
 ];
@@ -336,5 +534,24 @@ export const healthCheckHealthGetOptions = (options?: Options<HealthCheckHealthG
             return data;
         },
         queryKey: healthCheckHealthGetQueryKey(options)
+    });
+};
+
+export const metricsMetricsGetQueryKey = (options?: Options<MetricsMetricsGetData>) => [
+    createQueryKey('metricsMetricsGet', options)
+];
+
+export const metricsMetricsGetOptions = (options?: Options<MetricsMetricsGetData>) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await metricsMetricsGet({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true
+            });
+            return data;
+        },
+        queryKey: metricsMetricsGetQueryKey(options)
     });
 };
