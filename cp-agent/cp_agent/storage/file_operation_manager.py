@@ -20,7 +20,11 @@ from loguru import logger
 from cp_agent.agents.coder.event_bus import EventBus, EventType
 
 # Constants for protected directories/paths
-PROTECTED_PATHS = {".codepanda"}
+PROTECTED_PATHS = {".codepanda"}  # Directories protected from modification/deletion
+PROTECTED_FILES = {
+    "src/lib/supabaseClient.ts",
+    "src/tsconfig.json",
+}  # Specific files protected from modification/deletion
 
 
 class HookStatus(Enum):
@@ -148,16 +152,22 @@ class FileOperationManager:
         Record a file write operation for the current turn.
 
         Args:
-            path: The file path to write to
+            path: The file path to write to (relative to cwd)
             content: The content to write
             metadata: Optional metadata about the write operation
+
+        Raises:
+            RuntimeError: If no active turn or attempting to write to a protected file/path
         """
         if self._current_turn is None:
             raise RuntimeError("No active turn")
 
+        # Check if the path is protected BEFORE resolving to absolute
+        if self._is_protected_path(path):
+            raise RuntimeError(f"Cannot write to protected file/path: {path}")
+
         # Resolve path to absolute path
         abs_path = self.resolve_path(path)
-
         self._current_turn.changes.append(
             FileChange(
                 path=abs_path,
@@ -167,26 +177,31 @@ class FileOperationManager:
             )
         )
 
-    def _is_protected_path(self, path: str) -> bool:
+    def _is_protected_path(self, relative_path: str) -> bool:
         """
-        Check if a path is protected from deletion.
+        Check if a relative path points to a protected file or is within a protected directory.
 
         Args:
-            path: The absolute path to check
+            relative_path: The relative path to check (from cwd)
 
         Returns:
             True if the path is protected, False otherwise
         """
-        # Normalize the path to handle different path formats
-        norm_path = os.path.normpath(path)
+        # Normalize the relative path
+        norm_path = os.path.normpath(relative_path)
 
-        # Check if path is in any protected directory
+        # 1. Check if the exact relative path matches a protected file
+        if norm_path in PROTECTED_FILES:
+            return True
+
+        # 2. Check if any part of the path matches a protected directory name
         path_parts = norm_path.split(os.sep)
-
-        # Look for protected paths in the path parts
-        for i in range(len(path_parts)):
-            if path_parts[i] in PROTECTED_PATHS:
-                # This is either a protected directory or a file/dir under it
+        for part in path_parts:
+            # Skip empty parts or '.' parts
+            if not part or part == ".":
+                continue
+            # Check if the individual directory name is protected
+            if part in PROTECTED_PATHS:
                 return True
 
         return False
@@ -196,25 +211,25 @@ class FileOperationManager:
         Record a file deletion operation for the current turn.
 
         Args:
-            path: The file path to delete
+            path: The file path to delete (relative to cwd)
             metadata: Optional metadata about the deletion operation
 
         Raises:
-            RuntimeError: If no active turn or attempting to delete a protected file
+            RuntimeError: If no active turn or attempting to delete a protected file/path
             FileNotFoundError: If the file doesn't exist
         """
         if self._current_turn is None:
             raise RuntimeError("No active turn")
+
+        # Check if the path is protected BEFORE resolving to absolute
+        if self._is_protected_path(path):
+            raise RuntimeError(f"Cannot delete protected file/path: {path}")
 
         # Resolve path to absolute path
         abs_path = self.resolve_path(path)
 
         if not os.path.exists(abs_path):
             raise FileNotFoundError(f"File not found: {abs_path}")
-
-        # Check if the file is in a protected directory
-        if self._is_protected_path(abs_path):
-            raise RuntimeError(f"Cannot delete protected file: {abs_path}")
 
         self._current_turn.changes.append(
             FileChange(
@@ -234,12 +249,27 @@ class FileOperationManager:
         Record a file rename operation for the current turn.
 
         Args:
-            source_path: The path of the file to rename
-            destination_path: The destination path for the renamed file
+            source_path: The path of the file to rename (relative to cwd)
+            destination_path: The destination path for the renamed file (relative to cwd)
             metadata: Optional metadata about the rename operation
+
+        Raises:
+            RuntimeError: If no active turn or attempting to rename from/to a protected file/path
+            FileNotFoundError: If the source file doesn't exist
+            FileExistsError: If the destination file already exists
         """
         if self._current_turn is None:
             raise RuntimeError("No active turn")
+
+        # Check if source or destination paths are protected BEFORE resolving
+        if self._is_protected_path(source_path):
+            raise RuntimeError(
+                f"Cannot rename protected source file/path: {source_path}"
+            )
+        if self._is_protected_path(destination_path):
+            raise RuntimeError(
+                f"Cannot rename to protected destination file/path: {destination_path}"
+            )
 
         # Resolve paths to absolute paths
         abs_source_path = self.resolve_path(source_path)
