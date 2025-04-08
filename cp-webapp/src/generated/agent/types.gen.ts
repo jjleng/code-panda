@@ -19,6 +19,21 @@ export type ChatRequest = {
     context: RequestContext;
 };
 
+export type CreditBalance = {
+    /**
+     * Type of credit (e.g., 'free', 'promotional', 'purchased')
+     */
+    credit_type: string;
+    /**
+     * Number of credits remaining for this credit type
+     */
+    credits_remaining: number;
+    /**
+     * Expiration date of the credits, if applicable
+     */
+    valid_until?: string | null;
+};
+
 /**
  * Request model for generating project summary.
  */
@@ -41,6 +56,21 @@ export type GenerateSummaryResponse = {
      * Generated project description
      */
     description: string;
+};
+
+export type GetCreditsResponse = {
+    /**
+     * Number of free credits available to the user
+     */
+    free_credits: number;
+    /**
+     * Detailed breakdown of different credit balances
+     */
+    credit_balances: Array<CreditBalance>;
+    /**
+     * Total number of credits available across all credit types
+     */
+    total_credits: number;
 };
 
 export type HttpValidationError = {
@@ -117,6 +147,39 @@ export type ProjectCreateRequest = {
 };
 
 /**
+ * Individual item in a project's publishing history.
+ */
+export type PublishHistoryItem = {
+    id: string;
+    domain_name: string;
+    domain_type: string;
+    is_prod: boolean;
+    published_at: string;
+    publish_count: number;
+};
+
+/**
+ * Request model for publishing to selected domains.
+ */
+export type PublishRequest = {
+    /**
+     * List of domain names to publish to
+     */
+    domain_names?: Array<string>;
+};
+
+/**
+ * Response model for publishing a project.
+ */
+export type PublishResponse = {
+    message: string;
+    publishedDomains: Array<string>;
+    results: Array<{
+        [key: string]: unknown;
+    }>;
+};
+
+/**
  * Context information for chat requests.
  */
 export type RequestContext = {
@@ -126,6 +189,62 @@ export type RequestContext = {
 export type SecretRequest = {
     name: string;
     value: string;
+};
+
+/**
+ * Response after deleting a subdomain.
+ */
+export type SubdomainDeleteResponse = {
+    message: string;
+    domain: string;
+};
+
+/**
+ * Request to edit an existing subdomain.
+ */
+export type SubdomainEditRequest = {
+    current_domain: string;
+    new_subdomain: string;
+};
+
+/**
+ * Request model for updating a project's custom subdomain.
+ */
+export type SubdomainUpdateRequest = {
+    subdomain: string;
+};
+
+/**
+ * Response model for updating a project's subdomain.
+ */
+export type SubdomainUpdateResponse = {
+    message: string;
+    subdomain: string;
+    domain: string;
+};
+
+/**
+ * Request model for switching git commit.
+ */
+export type SwitchCommitRequest = {
+    /**
+     * The git commit hash to switch to
+     */
+    commit_hash: string;
+};
+
+/**
+ * Response model for switching git commit.
+ */
+export type SwitchCommitResponse = {
+    /**
+     * Success or error message
+     */
+    message: string;
+    /**
+     * Whether the switch was successful
+     */
+    success: boolean;
 };
 
 export type TextBlock = {
@@ -161,6 +280,36 @@ export type ChatApiV1ChatPostResponses = {
      */
     200: unknown;
 };
+
+export type HeartbeatApiV1HeartbeatPostData = {
+    body?: never;
+    headers?: {
+        'X-Project-ID'?: string | null;
+    };
+    path?: never;
+    query?: never;
+    url: '/api/v1/heartbeat/';
+};
+
+export type HeartbeatApiV1HeartbeatPostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type HeartbeatApiV1HeartbeatPostError = HeartbeatApiV1HeartbeatPostErrors[keyof HeartbeatApiV1HeartbeatPostErrors];
+
+export type HeartbeatApiV1HeartbeatPostResponses = {
+    /**
+     * Successful Response
+     */
+    200: {
+        [key: string]: unknown;
+    };
+};
+
+export type HeartbeatApiV1HeartbeatPostResponse = HeartbeatApiV1HeartbeatPostResponses[keyof HeartbeatApiV1HeartbeatPostResponses];
 
 export type CreateProjectApiV1ProjectsPostData = {
     body: ProjectCreateRequest;
@@ -380,6 +529,215 @@ export type DownloadProjectApiV1ProjectsProjectIdDownloadGetResponses = {
     200: unknown;
 };
 
+export type SwitchCommitApiV1ProjectsProjectIdSwitchCommitPostData = {
+    body: SwitchCommitRequest;
+    path: {
+        project_id: string;
+    };
+    query?: never;
+    url: '/api/v1/projects/{project_id}/switch-commit';
+};
+
+export type SwitchCommitApiV1ProjectsProjectIdSwitchCommitPostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type SwitchCommitApiV1ProjectsProjectIdSwitchCommitPostError = SwitchCommitApiV1ProjectsProjectIdSwitchCommitPostErrors[keyof SwitchCommitApiV1ProjectsProjectIdSwitchCommitPostErrors];
+
+export type SwitchCommitApiV1ProjectsProjectIdSwitchCommitPostResponses = {
+    /**
+     * Successful Response
+     */
+    200: SwitchCommitResponse;
+};
+
+export type SwitchCommitApiV1ProjectsProjectIdSwitchCommitPostResponse = SwitchCommitApiV1ProjectsProjectIdSwitchCommitPostResponses[keyof SwitchCommitApiV1ProjectsProjectIdSwitchCommitPostResponses];
+
+export type CreateSubdomainApiV1ProjectsProjectIdSubdomainPutData = {
+    body: SubdomainUpdateRequest;
+    path: {
+        project_id: string;
+    };
+    query?: never;
+    url: '/api/v1/projects/{project_id}/subdomain';
+};
+
+export type CreateSubdomainApiV1ProjectsProjectIdSubdomainPutErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type CreateSubdomainApiV1ProjectsProjectIdSubdomainPutError = CreateSubdomainApiV1ProjectsProjectIdSubdomainPutErrors[keyof CreateSubdomainApiV1ProjectsProjectIdSubdomainPutErrors];
+
+export type CreateSubdomainApiV1ProjectsProjectIdSubdomainPutResponses = {
+    /**
+     * Successful Response
+     */
+    200: SubdomainUpdateResponse;
+};
+
+export type CreateSubdomainApiV1ProjectsProjectIdSubdomainPutResponse = CreateSubdomainApiV1ProjectsProjectIdSubdomainPutResponses[keyof CreateSubdomainApiV1ProjectsProjectIdSubdomainPutResponses];
+
+export type EditProjectSubdomainApiV1ProjectsProjectIdSubdomainEditPutData = {
+    body: SubdomainEditRequest;
+    path: {
+        project_id: string;
+    };
+    query?: never;
+    url: '/api/v1/projects/{project_id}/subdomain/edit';
+};
+
+export type EditProjectSubdomainApiV1ProjectsProjectIdSubdomainEditPutErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type EditProjectSubdomainApiV1ProjectsProjectIdSubdomainEditPutError = EditProjectSubdomainApiV1ProjectsProjectIdSubdomainEditPutErrors[keyof EditProjectSubdomainApiV1ProjectsProjectIdSubdomainEditPutErrors];
+
+export type EditProjectSubdomainApiV1ProjectsProjectIdSubdomainEditPutResponses = {
+    /**
+     * Successful Response
+     */
+    200: SubdomainUpdateResponse;
+};
+
+export type EditProjectSubdomainApiV1ProjectsProjectIdSubdomainEditPutResponse = EditProjectSubdomainApiV1ProjectsProjectIdSubdomainEditPutResponses[keyof EditProjectSubdomainApiV1ProjectsProjectIdSubdomainEditPutResponses];
+
+export type DeleteSubdomainApiV1ProjectsProjectIdSubdomainDomainDeleteData = {
+    body?: never;
+    path: {
+        project_id: string;
+        domain: string;
+    };
+    query?: never;
+    url: '/api/v1/projects/{project_id}/subdomain/{domain}';
+};
+
+export type DeleteSubdomainApiV1ProjectsProjectIdSubdomainDomainDeleteErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type DeleteSubdomainApiV1ProjectsProjectIdSubdomainDomainDeleteError = DeleteSubdomainApiV1ProjectsProjectIdSubdomainDomainDeleteErrors[keyof DeleteSubdomainApiV1ProjectsProjectIdSubdomainDomainDeleteErrors];
+
+export type DeleteSubdomainApiV1ProjectsProjectIdSubdomainDomainDeleteResponses = {
+    /**
+     * Successful Response
+     */
+    200: SubdomainDeleteResponse;
+};
+
+export type DeleteSubdomainApiV1ProjectsProjectIdSubdomainDomainDeleteResponse = DeleteSubdomainApiV1ProjectsProjectIdSubdomainDomainDeleteResponses[keyof DeleteSubdomainApiV1ProjectsProjectIdSubdomainDomainDeleteResponses];
+
+export type GetProjectPublishHistoryApiV1ProjectsProjectIdPublishHistoryGetData = {
+    body?: never;
+    path: {
+        project_id: string;
+    };
+    query?: never;
+    url: '/api/v1/projects/{project_id}/publish-history';
+};
+
+export type GetProjectPublishHistoryApiV1ProjectsProjectIdPublishHistoryGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetProjectPublishHistoryApiV1ProjectsProjectIdPublishHistoryGetError = GetProjectPublishHistoryApiV1ProjectsProjectIdPublishHistoryGetErrors[keyof GetProjectPublishHistoryApiV1ProjectsProjectIdPublishHistoryGetErrors];
+
+export type GetProjectPublishHistoryApiV1ProjectsProjectIdPublishHistoryGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: Array<PublishHistoryItem>;
+};
+
+export type GetProjectPublishHistoryApiV1ProjectsProjectIdPublishHistoryGetResponse = GetProjectPublishHistoryApiV1ProjectsProjectIdPublishHistoryGetResponses[keyof GetProjectPublishHistoryApiV1ProjectsProjectIdPublishHistoryGetResponses];
+
+export type PublishProjectApiV1ProjectsProjectIdPublishPostData = {
+    body: PublishRequest;
+    path: {
+        project_id: string;
+    };
+    query?: never;
+    url: '/api/v1/projects/{project_id}/publish';
+};
+
+export type PublishProjectApiV1ProjectsProjectIdPublishPostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type PublishProjectApiV1ProjectsProjectIdPublishPostError = PublishProjectApiV1ProjectsProjectIdPublishPostErrors[keyof PublishProjectApiV1ProjectsProjectIdPublishPostErrors];
+
+export type PublishProjectApiV1ProjectsProjectIdPublishPostResponses = {
+    /**
+     * Successful Response
+     */
+    200: PublishResponse;
+};
+
+export type PublishProjectApiV1ProjectsProjectIdPublishPostResponse = PublishProjectApiV1ProjectsProjectIdPublishPostResponses[keyof PublishProjectApiV1ProjectsProjectIdPublishPostResponses];
+
+export type GetDomainStatusApiV1ProjectsProjectIdDomainStatusDomainGetData = {
+    body?: never;
+    path: {
+        project_id: string;
+        domain: string;
+    };
+    query?: never;
+    url: '/api/v1/projects/{project_id}/domain-status/{domain}';
+};
+
+export type GetDomainStatusApiV1ProjectsProjectIdDomainStatusDomainGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetDomainStatusApiV1ProjectsProjectIdDomainStatusDomainGetError = GetDomainStatusApiV1ProjectsProjectIdDomainStatusDomainGetErrors[keyof GetDomainStatusApiV1ProjectsProjectIdDomainStatusDomainGetErrors];
+
+export type GetDomainStatusApiV1ProjectsProjectIdDomainStatusDomainGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: {
+        [key: string]: unknown;
+    };
+};
+
+export type GetDomainStatusApiV1ProjectsProjectIdDomainStatusDomainGetResponse = GetDomainStatusApiV1ProjectsProjectIdDomainStatusDomainGetResponses[keyof GetDomainStatusApiV1ProjectsProjectIdDomainStatusDomainGetResponses];
+
+export type GetCreditsApiV1SubscriptionsCreditsGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/subscriptions/credits';
+};
+
+export type GetCreditsApiV1SubscriptionsCreditsGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: GetCreditsResponse;
+};
+
+export type GetCreditsApiV1SubscriptionsCreditsGetResponse = GetCreditsApiV1SubscriptionsCreditsGetResponses[keyof GetCreditsApiV1SubscriptionsCreditsGetResponses];
+
 export type RootGetData = {
     body?: never;
     path?: never;
@@ -415,3 +773,17 @@ export type HealthCheckHealthGetResponses = {
 };
 
 export type HealthCheckHealthGetResponse = HealthCheckHealthGetResponses[keyof HealthCheckHealthGetResponses];
+
+export type MetricsMetricsGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/metrics';
+};
+
+export type MetricsMetricsGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};

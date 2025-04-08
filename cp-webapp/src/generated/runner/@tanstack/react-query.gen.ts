@@ -2,8 +2,8 @@
 
 import type { Options } from '@hey-api/client-fetch';
 import { queryOptions, infiniteQueryOptions, type InfiniteData, type UseMutationOptions } from '@tanstack/react-query';
-import type { CheckPreviewData, GetFileContentData, GetFileTreeData, GetCommitsData, GetCommitsError, GetCommitsResponse, GetCommitDiffData, GetFileDiffData, SwitchCommitData, SwitchCommitError, SwitchCommitResponse, HealthData, AddPackageData, AddPackageError, AddPackageResponse, CheckBuildErrorsData, CheckBuildErrorsError, CheckBuildErrorsResponse, LintProjectData, LintProjectError, LintProjectResponse, StartProjectData, StartProjectError, StartProjectResponse, StopProjectData, StopProjectError, StopProjectResponse } from '../types.gen';
-import { checkPreview, getFileContent, getFileTree, getCommits, getCommitDiff, getFileDiff, switchCommit, health, addPackage, checkBuildErrors, lintProject, startProject, stopProject, client } from '../sdk.gen';
+import type { CheckPreviewData, GetFileContentData, GetFileTreeData, GetCommitsData, GetCommitsError, GetCommitsResponse, GetCommitDiffData, GetFileDiffData, SwitchCommitData, SwitchCommitError, SwitchCommitResponse, HealthData, AddPackageData, AddPackageError, AddPackageResponse, BuildSiteData, BuildSiteError, BuildSiteResponse, CheckBuildErrorsData, CheckBuildErrorsError, CheckBuildErrorsResponse, LintProjectData, LintProjectError, LintProjectResponse, StartProjectData, StartProjectError, StartProjectResponse, StopProjectData, StopProjectError, StopProjectResponse } from '../types.gen';
+import { checkPreview, getFileContent, getFileTree, getCommits, getCommitDiff, getFileDiff, switchCommit, health, addPackage, buildSite, checkBuildErrors, lintProject, startProject, stopProject, client } from '../sdk.gen';
 
 type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
@@ -278,6 +278,39 @@ export const addPackageMutation = (options?: Partial<Options<AddPackageData>>) =
     const mutationOptions: UseMutationOptions<AddPackageResponse, AddPackageError, Options<AddPackageData>> = {
         mutationFn: async (localOptions) => {
             const { data } = await addPackage({
+                ...options,
+                ...localOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const buildSiteQueryKey = (options: Options<BuildSiteData>) => [
+    createQueryKey('buildSite', options)
+];
+
+export const buildSiteOptions = (options: Options<BuildSiteData>) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await buildSite({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true
+            });
+            return data;
+        },
+        queryKey: buildSiteQueryKey(options)
+    });
+};
+
+export const buildSiteMutation = (options?: Partial<Options<BuildSiteData>>) => {
+    const mutationOptions: UseMutationOptions<BuildSiteResponse, BuildSiteError, Options<BuildSiteData>> = {
+        mutationFn: async (localOptions) => {
+            const { data } = await buildSite({
                 ...options,
                 ...localOptions,
                 throwOnError: true

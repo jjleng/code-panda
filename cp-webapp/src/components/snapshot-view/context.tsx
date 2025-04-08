@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { switchCommitMutation } from '@/generated/runner/@tanstack/react-query.gen';
+import { switchCommitApiV1ProjectsProjectIdSwitchCommitPostMutation } from '@/generated/agent/@tanstack/react-query.gen';
 import { useToast } from '@/hooks/use-toast';
 import { useProject } from '@/context';
 
@@ -35,7 +35,9 @@ export function SnapshotProvider({ children }: { children?: ReactNode }) {
 
   const { toast } = useToast();
 
-  const switchCommitMutate = useMutation(switchCommitMutation());
+  const switchCommitMutate = useMutation(
+    switchCommitApiV1ProjectsProjectIdSwitchCommitPostMutation()
+  );
 
   const triggerRefresh = () => {
     setRefreshTrigger(prev => prev + 1);
@@ -47,8 +49,10 @@ export function SnapshotProvider({ children }: { children?: ReactNode }) {
     try {
       setSwitchingCommit(true);
       await switchCommitMutate.mutateAsync({
-        body: {
+        path: {
           project_id: projectId,
+        },
+        body: {
           commit_hash: hash,
         },
       });

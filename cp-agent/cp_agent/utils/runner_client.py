@@ -1,6 +1,9 @@
 """Client for interacting with cp-runner API."""
 
 from cp_agent.config import settings
+from cp_agent.generated.api.git import (
+    switch_commit as switch_commit_api,
+)
 from cp_agent.generated.api.projects import add_package as add_package_api
 from cp_agent.generated.api.projects import check_build_errors
 from cp_agent.generated.api.projects import lint_project as lint_project_api
@@ -17,11 +20,18 @@ from cp_agent.generated.models.project_operation_request_body import (
 from cp_agent.generated.models.project_operation_response_body import (
     ProjectOperationResponseBody,
 )
+from cp_agent.generated.models.switch_commit_request_body import (
+    SwitchCommitRequestBody,
+)
+from cp_agent.generated.models.switch_commit_response_body import (
+    SwitchCommitResponseBody,
+)
 
 ResponseType = ErrorModel | ProjectOperationResponseBody
 BuildErrorType = ErrorModel | BuildErrorResponseBody
 LintResponseType = ErrorModel | LintResponseBody
 AddPackageResponseType = ErrorModel | AddPackageResponseBody
+SwitchCommitResponseType = ErrorModel | SwitchCommitResponseBody  # Added type alias
 
 
 class RunnerClient:
@@ -87,3 +97,22 @@ class RunnerClient:
             return response
         except Exception as e:
             raise RuntimeError(f"Failed to install package: {e}")
+
+    async def switch_commit(
+        self, project_id: str, commit_hash: str
+    ) -> SwitchCommitResponseType:
+        """Switch the project's working directory to a specific commit via the runner."""
+        try:
+            request_body = SwitchCommitRequestBody(
+                project_id=project_id, commit_hash=commit_hash
+            )
+            response = await switch_commit_api.asyncio(
+                client=self.client, body=request_body
+            )
+
+            if not response:
+                raise RuntimeError("No response received from runner")
+
+            return response
+        except Exception as e:
+            raise RuntimeError(f"Failed to switch commit for project {project_id}: {e}")

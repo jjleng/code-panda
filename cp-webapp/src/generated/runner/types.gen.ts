@@ -49,6 +49,36 @@ export type BuildErrorResponseBody = {
     message: string;
 };
 
+export type BuildSiteRequestBody = {
+    /**
+     * A URL to the JSON Schema for this object.
+     */
+    readonly $schema?: string;
+    /**
+     * ID of the project to build
+     */
+    project_id: string;
+};
+
+export type BuildSiteResponseBody = {
+    /**
+     * A URL to the JSON Schema for this object.
+     */
+    readonly $schema?: string;
+    /**
+     * Build output or error message
+     */
+    message: string;
+    /**
+     * Path to the build output directory if successful
+     */
+    output_dir: string;
+    /**
+     * Whether the build was successful
+     */
+    success: boolean;
+};
+
 export type CheckPreviewResponseBody = {
     /**
      * A URL to the JSON Schema for this object.
@@ -617,6 +647,35 @@ export type AddPackageResponses = {
 };
 
 export type AddPackageResponse = AddPackageResponses[keyof AddPackageResponses];
+
+export type BuildSiteData = {
+    body: BuildSiteRequestBody;
+    path?: never;
+    query?: never;
+    url: '/projects/build-site';
+};
+
+export type BuildSiteErrors = {
+    /**
+     * Unprocessable Entity
+     */
+    422: ErrorModel;
+    /**
+     * Internal Server Error
+     */
+    500: ErrorModel;
+};
+
+export type BuildSiteError = BuildSiteErrors[keyof BuildSiteErrors];
+
+export type BuildSiteResponses = {
+    /**
+     * OK
+     */
+    200: BuildSiteResponseBody;
+};
+
+export type BuildSiteResponse = BuildSiteResponses[keyof BuildSiteResponses];
 
 export type CheckBuildErrorsData = {
     body: ProjectOperationRequestBody;

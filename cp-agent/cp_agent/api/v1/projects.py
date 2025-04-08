@@ -21,12 +21,15 @@ from cp_agent.schemas.projects import (
     MigrationRequest,
     MigrationResponse,
     ProjectCreateRequest,
+    SwitchCommitRequest,
+    SwitchCommitResponse,
 )
 from cp_agent.utils.agent_helpers import get_agent
 from cp_agent.utils.project_download import create_project_zip
 from cp_agent.utils.project_paths import find_project_paths
 from cp_agent.utils.project_summary import generate_project_summary
 from cp_agent.utils.snapshot import create_snapshot
+from cp_agent.utils.runner_client import RunnerClient, ErrorModel
 from cp_agent.utils.supabase_utils import SupabaseUtil
 
 router = APIRouter()
@@ -576,6 +579,95 @@ async def download_project(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to create project download: {str(e)}",
+        )
+
+
+@router.post(
+    "/{project_id}/switch-commit",
+    response_model=SwitchCommitResponse,
+    status_code=status.HTTP_200_OK,
+)
+async def switch_commit(
+    project_id: str,
+    request: SwitchCommitRequest,
+) -> SwitchCommitResponse:
+    """Switch the project's working directory to a specific git commit.
+
+    Args:
+        project_id: The ID of the project.
+        request: Request containing the commit hash.
+
+    Returns:
+        SwitchCommitResponse: Indicates success or failure.
+
+    Raises:
+        HTTPException: 404 if project doesn't exist.
+        HTTPException: 500 if switching commit fails.
+    """
+    # Check project exists (optional, runner might handle this)
+    project_manager = get_project_manager()
+    project = await project_manager.get_project(project_id)
+    if not project:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Project {project_id} not found",
+        )
+
+    runner_client: RunnerClient = RunnerClient()
+
+    try:
+        logger.info(
+            f"Attempting to switch project {project_id} to commit {request.commit_hash}"
+        )
+        # Call the runner using the updated client method
+        runner_response = await runner_client.switch_commit(
+            project_id=project_id, commit_hash=request.commit_hash
+        )
+
+        if isinstance(runner_response, ErrorModel):
+            logger.error(f"Runner failed to switch commit for project {project_id}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to switch commit",
+            )
+
+        logger.info(
+            f"Successfully switched project {project_id} to commit {request.commit_hash}"
+        )
+
+        # Add memory item and compact memory
+        try:
+            agent = await get_agent(project_id)
+            memory_message = (
+                "The project state has been reverted to an earlier point in the development history. "
+                "IMPORTANT: Any file contents previously accessed or stored in memory are now STALE. "
+                "You must re-read ALL files before working with them. "
+            )
+            await agent.message_manager.add_memory_item(memory_message)
+            logger.info(f"Added revert memory item for project {project_id}")
+            # Trigger compaction
+            await agent.message_manager.compact_memory()
+            logger.info(f"Triggered memory compaction for project {project_id}")
+        except Exception as agent_err:
+            # Log agent-related errors but don't fail the API call
+            logger.warning(
+                f"Error during agent memory update/compaction for project {project_id} after commit switch: {agent_err}"
+            )
+
+        return SwitchCommitResponse(
+            message="Commit switch successful",
+            success=True,
+        )
+
+    except HTTPException as http_exc:
+        raise http_exc
+    except Exception as e:
+        logger.exception(
+            f"Unexpected error switching commit for project {project_id}: {e}"
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An unexpected error occurred: {str(e)}",
         )
 
 
