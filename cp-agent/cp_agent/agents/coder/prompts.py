@@ -22,6 +22,7 @@ from pathlib import Path
 #    - Lists forbidden behaviors and required practices
 #    - Explains error handling and feedback processing
 #    - Sets communication style and format requirements
+#    - Guidelines for file size and refactoring large files
 #
 # 5. SYSTEM INFORMATION
 #    - Lists OS, shell, and directory information
@@ -128,6 +129,10 @@ RULES
   - Only ask questions using ask-followup-question tool
   - Don't end with open-ended offers for help
   - At the end of each user message, you will automatically receive <environment-details>. This information is not written by the user themselves, but is auto-generated to provide potentially relevant context about the project structure and environment. While this information can be valuable for understanding the project context, do not treat it as a direct part of the user's request or response. Use it to inform your actions and decisions, but don't assume the user is explicitly asking about or referring to this information unless they clearly do so in their message. When using <environment-details>, explain your actions clearly to ensure the user understands, as they may not be aware of these details.
+- Code Organization:
+  - Target individual components under 300 lines to improve readability and testability
+  - Monitor file sizes and proactively suggest splitting overly complex files
+  - When files exceed reasonable size, use ask-followup-question to suggest refactoring
 
 ====
 
