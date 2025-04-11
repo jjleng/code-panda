@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from base64 import b64encode
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
 from typing import Literal, Optional, TypedDict
 
@@ -12,27 +12,38 @@ class ImageUrl(TypedDict):
     url: str
 
 
+class CacheControl(TypedDict):
+    type: str
+
+
+class CachePoint(TypedDict):
+    type: str
+
+
 class ImageBlock(TypedDict):
     type: str
     image_url: ImageUrl
 
 
-class TextBlock(TypedDict):
+class TextBlock(TypedDict, total=False):
     type: str
     text: str
+    cache_control: Optional[CacheControl]
 
 
-MessagePart = TextBlock | ImageBlock
+class CachePointBlock(TypedDict):
+    cachePoint: CachePoint
+
+
+MessagePart = TextBlock | ImageBlock | CachePointBlock
 MessageContent = str | list[MessagePart]
 
 
-@dataclass
-class Message:
+class Message(TypedDict):
     """Message in agent conversation with multimodal support."""
 
     content: MessageContent
     role: str  # 'user' or 'assistant'
-    timestamp: str = field(default_factory=lambda: datetime.now().isoformat())
 
 
 @dataclass
@@ -47,8 +58,14 @@ class Attachment:
     size: Optional[int] = None
 
 
-def create_text_block(text: str) -> TextBlock:
+def create_text_block(text: str, cache_control_type: Optional[str] = None) -> TextBlock:
     """Create a text block for message content."""
+    if cache_control_type:
+        return {
+            "type": "text",
+            "text": text,
+            "cache_control": {"type": cache_control_type},
+        }
     return {"type": "text", "text": text}
 
 

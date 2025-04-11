@@ -131,13 +131,7 @@ class ContextEnricher:
         content = await content_generator()
         content_data = create_text_block(f"<{tag}>{content}</{tag}>")
         msg = Message(content=[content_data], role="user")
-        self.memory.rpush(
-            "messages",
-            {
-                "role": "user",
-                "content": msg.content,
-            },
-        )
+        self.memory.rpush("messages", dict(msg))
 
     async def _generate_project_info(self) -> str:
         """Generate project information content."""
@@ -206,13 +200,7 @@ class ContextEnricher:
         content = await general_instructions(self.supabase_util.supabase_project_id)
         content_data = create_text_block(f"<{tag}>{content}</{tag}>")
         msg = Message(content=[content_data], role="user")
-        self.memory.rpush(
-            "messages",
-            {
-                "role": "user",
-                "content": msg.content,
-            },
-        )
+        self.memory.rpush("messages", dict(msg))
 
     async def prime_supabase_report(self, with_cache: bool) -> None:
         """Prime the Supabase report with optional caching.

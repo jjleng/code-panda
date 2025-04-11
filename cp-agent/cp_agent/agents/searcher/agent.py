@@ -223,7 +223,7 @@ class SearcherAgent(BaseAgent):
         # Extract and concatenate all text content
         text_parts: list[str] = []
         for part in message_parts:
-            if part["type"] == "text":
+            if part.get("type") == "text":
                 text_block = cast(TextBlock, part)
                 text_parts.append(text_block["text"])
 

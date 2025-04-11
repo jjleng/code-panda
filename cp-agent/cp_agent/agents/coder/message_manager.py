@@ -10,8 +10,12 @@ from cp_agent.utils.message_formats import (
     Attachment,
     Message,
     MessageContent,
+    MessagePart,
     create_message_content,
+    create_text_block,
 )
+
+IS_BEDROCK = False
 
 
 class MessageManager:
@@ -66,38 +70,22 @@ class MessageManager:
         content = create_message_content(text, attachments)
 
         msg = Message(content=content, role="user")
-        self.memory.rpush("messages", {"role": "user", "content": content})
-
-        self.chat_history.append(
-            {
-                "role": "user",
-                "content": text,
-                "timestamp": msg.timestamp,
-                "attachments": [
-                    {
-                        "url": att.url,
-                        "type": att.type,
-                        "filename": att.filename,
-                        "mime_type": att.mime_type,
-                        "size": att.size,
-                    }
-                    for att in attachments
-                ],
-            }
-        )
+        self.memory.rpush("messages", dict(msg))
 
     async def add_assistant_message(self, content: str) -> None:
         """Add assistant message to both API memory and chat history."""
-        msg = Message(content=content, role="assistant")
-        self.memory.rpush("messages", {"role": "assistant", "content": content})
 
-        self.chat_history.append(
-            {
-                "role": "assistant",
-                "content": content,
-                "timestamp": msg.timestamp,
-            }
-        )
+        if self.enable_prompt_cache:
+            message_content: list[MessagePart] = [create_text_block(content)]
+            if not IS_BEDROCK:
+                message_content = [create_text_block(content, "ephemeral")]
+            else:
+                message_content.append({"cachePoint": {"type": "default"}})
+            message = Message(content=message_content, role="assistant")
+        else:
+            message = Message(content=content, role="assistant")
+
+        self.memory.rpush("messages", dict(message))
 
     async def add_memory_item(
         self, content: MessageContent, role: str = "user"
