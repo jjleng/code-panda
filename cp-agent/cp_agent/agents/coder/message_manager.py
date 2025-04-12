@@ -48,6 +48,8 @@ class MessageManager:
 
         self.chat_history: list[dict[str, Any]] = []
         self.enable_prompt_cache = enable_prompt_cache
+        self.checkpoint_count = 0
+        self.max_checkpoints = 4
 
     async def compact_memory(self) -> None:
         """Manually trigger memory compaction."""
@@ -75,7 +77,8 @@ class MessageManager:
     async def add_assistant_message(self, content: str) -> None:
         """Add assistant message to both API memory and chat history."""
 
-        if self.enable_prompt_cache:
+        if self.enable_prompt_cache and self.checkpoint_count < self.max_checkpoints:
+            self.checkpoint_count += 1
             message_content: list[MessagePart] = [create_text_block(content)]
             if not IS_BEDROCK:
                 message_content = [create_text_block(content, "ephemeral")]
@@ -86,6 +89,11 @@ class MessageManager:
             message = Message(content=content, role="assistant")
 
         self.memory.rpush("messages", dict(message))
+
+    async def reset_checkpoints(self) -> None:
+        """Reset the checkpoint counter, typically after a new conversation starts."""
+        self.checkpoint_count = 0
+        logger.debug("Reset checkpoint counter")
 
     async def add_memory_item(
         self, content: MessageContent, role: str = "user"

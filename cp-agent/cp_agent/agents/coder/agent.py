@@ -7,6 +7,7 @@ from typing import Any, AsyncGenerator, Dict, Optional, cast
 from uuid import UUID
 from zoneinfo import ZoneInfo
 
+import litellm
 from litellm import CustomStreamWrapper, acompletion
 from loguru import logger
 
@@ -468,9 +469,20 @@ class CoderAgent(BaseAgent):
                 yield TextEvent(text=error_msg)
                 self.state_manager.task.timeout()
 
+            except litellm.exceptions.BadRequestError as e:
+                logger.exception(e)
+                error_msg = f"Bad request error: {e.message}"
+                logger.error(error_msg)
+                await self.message_manager.add_assistant_message(error_msg)
+                yield TextEvent(text=error_msg)
+                self.state_manager.task.fail()
+
             except Exception as e:
-                logger.error(f"Stream processing error: {e}", exc_info=True)
-                error_msg = f"Error processing assistant response: {str(e)}"
+                logger.error(
+                    f"Task {self.state_manager.task.id} failed: {e}", exc_info=True
+                )
+                error_msg = f"Task failed: {str(e)}"
+                await self.message_manager.add_assistant_message(error_msg)
                 yield TextEvent(text=error_msg)
                 self.state_manager.task.fail()
 
