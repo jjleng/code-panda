@@ -1,6 +1,6 @@
 # CodePanda
 
-CodePanda is an AI-powered coding tool that helps you build full-stack web applications through natural language interaction. It specializes in creating complete LAPP (Landing page + Authentication + Product + Payment) solutions and other web applications using **React** with shadcn UI components, **Supabase** for backend services, and **Stripe** for payment processing.
+CodePanda is an AI-powered coding tool that helps you build full-stack web applications through natural language interaction.
 
 ## Try it Out
 
